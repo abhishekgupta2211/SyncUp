@@ -6,7 +6,7 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../data/providers/feed_provider.dart';
 import '../../presentation/widgets/comments_sheet.dart';
 import '../../presentation/widgets/post_card.dart';
-import '../../profile/presentation/pages/leaderboard_page.dart';
+import '../../../profile/presentation/pages/leaderboard_page.dart';
 
 /// The Feed tab — permanent friend-only posts (newest first).
 class FeedPage extends StatefulWidget {
