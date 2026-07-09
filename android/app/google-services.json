@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1082071161841",
+    "project_id": "sync-af9c0",
+    "storage_bucket": "sync-af9c0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1082071161841:android:ac5f511dd208e029970250",
+        "android_client_info": {
+          "package_name": "com.abhishek.lovechat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDw-URxYGBjZRuYLeyOZtXOMjMY1N3ieIE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
