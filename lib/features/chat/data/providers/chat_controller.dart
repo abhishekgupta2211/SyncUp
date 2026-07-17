@@ -1,11 +1,8 @@
 import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
-
 import 'package:image_picker/image_picker.dart';
-
 import '../../../../core/services/media_service.dart';
 import '../../../../core/supabase/supabase_service.dart';
 import '../models/message.dart';
@@ -13,8 +10,6 @@ import '../models/message_enums.dart';
 import '../models/reaction.dart';
 import '../repositories/chat_repository.dart';
 
-/// Per-conversation state: loads history, sends optimistically, and applies
-/// realtime inserts/updates (drives the heart ♡→🩷 when the peer reads).
 class ChatController extends ChangeNotifier {
   ChatController({
     required ChatRepository repository,

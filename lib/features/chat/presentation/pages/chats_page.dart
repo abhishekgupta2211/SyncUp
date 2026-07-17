@@ -14,7 +14,9 @@ import '../../../notifications/presentation/widgets/notifications_bell.dart';
 import '../../data/models/conversation.dart';
 import '../../data/providers/conversation_list_provider.dart';
 import '../widgets/conversation_tile.dart';
+import '../widgets/notes_bar.dart';
 import 'chat_thread_screen.dart';
+import 'archived_chats_page.dart';
 
 /// Chats tab — header, search, stories row, and the live conversation list.
 class ChatsPage extends StatefulWidget {
@@ -51,6 +53,39 @@ class _ChatsPageState extends State<ChatsPage> {
       peerName: c.peerName,
       peerUsername: c.peerUsername,
       peerAvatarUrl: c.peerAvatarUrl,
+    );
+  }
+
+  Future<void> _showOptions(Conversation c) async {
+    final theme = Theme.of(context);
+    final provider = context.read<ConversationListProvider>();
+    
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.archive_outlined),
+            title: const Text('Archive chat'),
+            onTap: () {
+              provider.archiveConversation(c.id, true);
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Chat with ${c.peerName} archived')),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+            title: Text('Delete chat', style: TextStyle(color: theme.colorScheme.error)),
+            onTap: () {
+              Navigator.pop(ctx);
+              _confirmDelete(c);
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -137,6 +172,9 @@ class _ChatsPageState extends State<ChatsPage> {
                         } else if (v == 'calls') {
                           Navigator.of(context).push(MaterialPageRoute(
                               builder: (_) => const Scaffold(body: CallsPage())));
+                        } else if (v == 'archived') {
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => const ArchivedChatsPage()));
                         }
                       },
                       itemBuilder: (_) => const [
@@ -164,6 +202,14 @@ class _ChatsPageState extends State<ChatsPage> {
                             title: Text('Friend requests'),
                           ),
                         ),
+                        PopupMenuItem(
+                          value: 'archived',
+                          child: ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(Icons.archive_outlined),
+                            title: Text('Archived chats'),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -179,6 +225,7 @@ class _ChatsPageState extends State<ChatsPage> {
                   ),
                 ),
               ),
+              const NotesBar(),
               SizedBox(height: 4.h),
               Expanded(child: _buildList(context, provider, conversations)),
             ],
@@ -223,7 +270,7 @@ class _ChatsPageState extends State<ChatsPage> {
           return ConversationTile(
             conversation: c,
             onTap: () => _open(c),
-            onLongPress: () => _confirmDelete(c),
+            onLongPress: () => _showOptions(c),
           );
         },
       ),

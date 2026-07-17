@@ -101,7 +101,7 @@ class PostCard extends StatelessWidget {
             if (text != null && text.isNotEmpty)
               Padding(
                 padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 10.h),
-                child: Text(text, style: theme.textTheme.bodyLarge),
+                child: _buildRichText(context, text, theme),
               ),
 
             // ---- Body: image ----
@@ -214,6 +214,35 @@ class PostCard extends StatelessWidget {
       ),
     );
     if (ok == true) await provider.deletePost(post.id);
+  }
+
+  Widget _buildRichText(BuildContext context, String text, ThemeData theme) {
+    final words = text.split(' ');
+    return Text.rich(
+      TextSpan(
+        children: words.map((word) {
+          if (word.startsWith('#')) {
+            return WidgetSpan(
+              child: GestureDetector(
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Showing posts for $word... 🔍')),
+                  );
+                },
+                child: Text(
+                  '$word ',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            );
+          }
+          return TextSpan(text: '$word ', style: theme.textTheme.bodyLarge);
+        }).toList(),
+      ),
+    );
   }
 }
 

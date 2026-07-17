@@ -25,6 +25,7 @@ class _PostComposerPageState extends State<PostComposerPage> {
   String? _ext;
   String? _contentType;
   bool _posting = false;
+  bool _generatingCaption = false;
 
   @override
   void initState() {
@@ -40,6 +41,20 @@ class _PostComposerPageState extends State<PostComposerPage> {
   }
 
   void _onTextChanged() => setState(() {});
+
+  Future<void> _generateAICaption() async {
+    setState(() => _generatingCaption = true);
+    // Simulation: In reality, call AIProvider to hit Gemini/OpenAI
+    await Future.delayed(const Duration(seconds: 1));
+    final current = _controller.text.trim();
+    final topics = current.isEmpty ? "life and vibes" : current;
+    final caption = "✨ Just reflecting on $topics. Staying synced and keeping the energy high! 🚀 #SyncUp #Vibes #SocialAI";
+    
+    setState(() {
+      _controller.text = caption;
+      _generatingCaption = false;
+    });
+  }
 
   bool get _canPost =>
       !_posting && (_controller.text.trim().isNotEmpty || _bytes != null);
@@ -143,9 +158,16 @@ class _PostComposerPageState extends State<PostComposerPage> {
               maxLines: 8,
               textCapitalization: TextCapitalization.sentences,
               enabled: !_posting,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: "What's on your mind?",
                 border: InputBorder.none,
+                suffixIcon: IconButton(
+                  onPressed: _generatingCaption ? null : _generateAICaption,
+                  icon: _generatingCaption 
+                    ? SizedBox(width: 16.r, height: 16.r, child: const CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.auto_awesome, color: Colors.amber),
+                  tooltip: 'Generate AI Caption',
+                ),
               ),
               style: theme.textTheme.bodyLarge,
             ),

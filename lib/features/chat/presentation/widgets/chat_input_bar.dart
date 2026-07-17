@@ -160,6 +160,21 @@ class _ChatInputBarState extends State<ChatInputBar> {
     setState(() => _recording = false);
   }
 
+  void _sendAIGame() {
+    final games = [
+      "🎮 AI Truth: What is your most embarrassing social media moment?",
+      "🎮 AI Dare: Send the 5th photo from your gallery right now!",
+      "🎮 AI Trivia: Which planet is known as the Red Planet?",
+      "🎮 AI Vibe Check: What is the one thing that makes you instantly happy?",
+      "🎮 AI Challenge: Can you reply using only emojis for the next 5 minutes?",
+      "🎮 Tic-Tac-Toe: Let's play! ❌⭕"
+    ];
+    final randomGame = games[DateTime.now().millisecond % games.length];
+    _controller.text = randomGame;
+    _onChanged();
+    _toast('AI Arena: Challenge selected! 🎮');
+  }
+
   void _sendIcebreaker() {
     final icebreakers = [
       "If you could travel anywhere right now, where would it be? ✈️",
@@ -374,6 +389,16 @@ class _ChatInputBarState extends State<ChatInputBar> {
                   padding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
                   constraints: BoxConstraints.tightFor(width: 40.r, height: 40.r),
+                ),
+                IconButton(
+                  icon: Icon(Icons.sports_esports_outlined,
+                      color: Colors.greenAccent,
+                      size: 20.r),
+                  onPressed: _sendAIGame,
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                  constraints:
+                      BoxConstraints.tightFor(width: 40.r, height: 40.r),
                 ),
                 IconButton(
                   icon: Icon(Icons.camera_alt_outlined,

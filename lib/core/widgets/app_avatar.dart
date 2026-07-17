@@ -14,7 +14,8 @@ class AppAvatar extends StatelessWidget {
     this.showOnline = false,
     this.isOnline = false,
     this.isVip = false,
-    this.hasStory = false, // NEW
+    this.hasStory = false,
+    this.frameType = 'none', // NEW
   });
 
   final String name;
@@ -24,6 +25,7 @@ class AppAvatar extends StatelessWidget {
   final bool isOnline;
   final bool isVip;
   final bool hasStory;
+  final String frameType;
 
   String get _initials {
     final parts =
@@ -88,6 +90,19 @@ class AppAvatar extends StatelessWidget {
       avatar = Stack(
         alignment: Alignment.center,
         children: [
+          if (frameType == 'neon')
+            Container(
+              width: radius * 2 + 10,
+              height: radius * 2 + 10,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.cyanAccent, width: 2),
+                boxShadow: [
+                  BoxShadow(color: Colors.cyanAccent.withValues(alpha: 0.6), blurRadius: 10, spreadRadius: 2),
+                ],
+              ),
+            ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(1,1), end: const Offset(1.05, 1.05), duration: 1.seconds),
+
           Container(
             width: radius * 2 + 6,
             height: radius * 2 + 6,

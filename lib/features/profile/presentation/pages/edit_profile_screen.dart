@@ -9,6 +9,8 @@ import '../../../../core/services/media_service.dart';
 import '../../../../core/supabase/supabase_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_avatar.dart';
+import '../../../../core/services/music_service.dart';
+import '../../../../core/widgets/music_picker_sheet.dart';
 import '../../../ai/data/providers/ai_provider.dart';
 import '../../../auth/data/providers/auth_provider.dart';
 import '../../data/models/profile.dart';
@@ -39,6 +41,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   XFile? _picked;
   bool _saving = false;
   bool _generatingBio = false;
+
+  Song? _selectedSong; // NEW
 
   @override
   void dispose() {
@@ -79,6 +83,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Future<void> _pickMusic() async {
+    final song = await showModalBottomSheet<Song>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const MusicPickerSheet(),
+    );
+    if (song != null) {
+      setState(() => _selectedSong = song);
+    }
+  }
+
   Future<void> _save() async {
     final name = _name.text.trim();
     final handle = _username.text.trim();
@@ -114,6 +130,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       statusLine: _status.text.trim(),
       bio: _bio.text.trim(),
       interests: _interests.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
+      themeSongName: _selectedSong?.title,
+      themeSongArtist: _selectedSong?.artist,
+      themeSongUrl: _selectedSong?.url,
+      themeSongCover: _selectedSong?.coverUrl,
       avatarUrl: avatarUrl,
     );
     if (!mounted) return;
@@ -243,6 +263,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           TextField(
             controller: _interests,
             decoration: const InputDecoration(hintText: 'Travel, Music, Coding...'),
+          ),
+          SizedBox(height: 18.h),
+          _label('Profile Song'),
+          ListTile(
+            onTap: _pickMusic,
+            tileColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+            leading: _selectedSong != null 
+              ? ClipRRect(borderRadius: BorderRadius.circular(4.r), child: Image.network(_selectedSong!.coverUrl, width: 32.r, height: 32.r))
+              : const Icon(Icons.music_note),
+            title: Text(_selectedSong?.title ?? 'Pick a vibe song'),
+            subtitle: Text(_selectedSong?.artist ?? 'Instagram style music'),
+            trailing: const Icon(Icons.chevron_right),
           ),
           SizedBox(height: 24.h),
           SizedBox(

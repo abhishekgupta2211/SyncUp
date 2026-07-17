@@ -32,7 +32,20 @@ class LoungeListPage extends StatelessWidget {
                   leading: Text(l['icon'] ?? '💬', style: TextStyle(fontSize: 32.sp)),
                   title: Text(l['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text(l['description'] ?? ''),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Joining ${l['name']} Voice Room... 🎙️')),
+                      );
+                    },
+                    icon: const Icon(Icons.mic, size: 16),
+                    label: const Text('Live'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      foregroundColor: theme.colorScheme.primary,
+                      elevation: 0,
+                    ),
+                  ),
                   onTap: () {
                     // Logic to open Lounge Chat Room
                     ScaffoldMessenger.of(context).showSnackBar(

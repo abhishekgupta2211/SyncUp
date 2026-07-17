@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// Simple translation helper. In a production app, you'd call Google Translate 
 /// or OpenAI API here. For now, it provides a smart simulation.
 class TranslationService {

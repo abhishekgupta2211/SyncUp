@@ -20,11 +20,30 @@ class ConversationListProvider extends ChangeNotifier {
   RealtimeChannel? _partChannel;
   RealtimeChannel? _blockChannel;
 
-  List<Conversation> get items => List.unmodifiable(_items);
+  List<Conversation> get items => List.unmodifiable(_items.where((c) => !c.isArchived));
+  List<Conversation> get archivedItems => List.unmodifiable(_items.where((c) => c.isArchived));
   bool get loading => _loading;
   String? get error => _error;
 
   String? get _myId => SupabaseService.currentUserId;
+
+  Future<void> archiveConversation(String conversationId, bool archive) async {
+    final idx = _items.indexWhere((c) => c.id == conversationId);
+    if (idx >= 0) {
+      _items[idx] = _items[idx].copyWith(isArchived: archive);
+      notifyListeners();
+    }
+    try {
+      await _client
+          .from(Tables.participants)
+          .update({'is_archived': archive})
+          .eq('conversation_id', conversationId)
+          .eq('user_id', _myId!);
+    } catch (e) {
+      debugPrint('[home.archiveConversation] FAILED: $e');
+      await load();
+    }
+  }
 
   Future<void> start() async {
     await load();
@@ -43,7 +62,7 @@ class ConversationListProvider extends ChangeNotifier {
       final parts = await _client
           .from(Tables.participants)
           .select(
-              'conversation_id, unread_count, conversations(id, last_message_text, last_message_type, last_message_at)')
+              'conversation_id, unread_count, is_archived, conversations(id, last_message_text, last_message_type, last_message_at)')
           .eq('user_id', me);
 
       final partList = (parts as List).cast<Map<String, dynamic>>();
@@ -100,6 +119,7 @@ class ConversationListProvider extends ChangeNotifier {
           lastMessageType: conv['last_message_type'] as String?,
           lastMessageAt: DateTime.parse(lastAt.toString()).toLocal(),
           unreadCount: (p['unread_count'] ?? 0) as int,
+          isArchived: (p['is_archived'] ?? false) as bool,
         ));
       }
       _sort(list);

@@ -190,6 +190,10 @@ class AuthProvider extends ChangeNotifier {
     required String statusLine,
     String? bio,
     List<String>? interests,
+    String? themeSongName,
+    String? themeSongArtist,
+    String? themeSongUrl,
+    String? themeSongCover,
     String? avatarUrl,
   }) async {
     final uid = _repo.currentUser?.id;
@@ -211,6 +215,10 @@ class AuthProvider extends ChangeNotifier {
         statusLine: statusLine.trim(),
         bio: bio?.trim(),
         interests: interests,
+        themeSongName: themeSongName,
+        themeSongArtist: themeSongArtist,
+        themeSongUrl: themeSongUrl,
+        themeSongCover: themeSongCover,
         avatarUrl: avatarUrl,
       );
       return true;

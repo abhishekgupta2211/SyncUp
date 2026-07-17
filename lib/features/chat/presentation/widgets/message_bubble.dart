@@ -11,6 +11,7 @@ import '../../data/models/message_enums.dart';
 import '../../data/models/reaction.dart';
 import 'heart_status.dart';
 import 'media_bubble.dart';
+import 'tic_tac_toe.dart';
 import 'voice_bubble.dart';
 
 /// A single chat bubble — pink gradient (mine) or surface (peer), with reply
@@ -189,6 +190,9 @@ class MessageBubble extends StatelessWidget {
       case MessageType.voice:
         return VoiceMessageContent(message: message, mine: mine);
       default:
+        if (message.message.contains('🎮 Tic-Tac-Toe')) {
+          return const TicTacToeGame();
+        }
         final scale = context.watch<SettingsProvider>().fontScale;
         return Text(
           message.message,

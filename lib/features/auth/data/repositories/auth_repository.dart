@@ -79,6 +79,10 @@ class AuthRepository {
     required String statusLine,
     String? bio,
     List<String>? interests,
+    String? themeSongName,   // NEW
+    String? themeSongArtist, // NEW
+    String? themeSongUrl,    // NEW
+    String? themeSongCover,  // NEW
     String? avatarUrl,
   }) async {
     final payload = <String, dynamic>{
@@ -87,6 +91,10 @@ class AuthRepository {
       'status_line': statusLine,
       'bio': bio,
       'interests': interests,
+      'theme_song_name': themeSongName,
+      'theme_song_artist': themeSongArtist,
+      'theme_song_url': themeSongUrl,
+      'theme_song_cover': themeSongCover,
     };
     if (avatarUrl != null) payload['avatar_url'] = avatarUrl;
     final updated = await _client

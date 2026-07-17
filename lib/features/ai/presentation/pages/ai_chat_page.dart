@@ -131,7 +131,7 @@ class _AIChatPageState extends State<AIChatPage> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(30.r),
               ),
               child: TextField(
@@ -139,7 +139,7 @@ class _AIChatPageState extends State<AIChatPage> {
                 style: const TextStyle(fontSize: 15),
                 decoration: InputDecoration(
                   hintText: 'Ask me anything...',
-                  hintStyle: TextStyle(color: theme.hintColor.withOpacity(0.5)),
+                  hintStyle: TextStyle(color: theme.hintColor.withValues(alpha: 0.5)),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
                 ),
@@ -202,9 +202,27 @@ class _AIBubble extends StatelessWidget {
               ),
               SizedBox(height: 8.h),
             ],
-            Text(
-              message.message,
-              style: TextStyle(color: isUser ? Colors.white : theme.colorScheme.onSurface, fontSize: 14.5.sp, height: 1.4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Text(
+                    message.message,
+                    style: TextStyle(color: isUser ? Colors.white : theme.colorScheme.onSurface, fontSize: 14.5.sp, height: 1.4),
+                  ),
+                ),
+                if (!isUser) ...[
+                  SizedBox(width: 8.w),
+                  GestureDetector(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('AI is reading the message... 🎙️'), duration: Duration(seconds: 1)),
+                      );
+                    },
+                    child: Icon(Icons.volume_up_rounded, size: 16.r, color: theme.colorScheme.primary.withValues(alpha: 0.7)),
+                  ),
+                ],
+              ],
             ),
           ],
         ),
@@ -229,8 +247,8 @@ class _TypingIndicator extends StatelessWidget {
             width: 6.r,
             height: 6.r,
             margin: EdgeInsets.symmetric(horizontal: 2.w),
-            decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.5), shape: BoxShape.circle),
-          ).animate(onPlay: (c) => c.repeat()).scale(duration: 600.ms, delay: (i * 200).ms, begin: Offset(0.5, 0.5), end: Offset(1.2, 1.2))),
+            decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.5), shape: BoxShape.circle),
+          ).animate(onPlay: (c) => c.repeat()).scale(duration: 600.ms, delay: (i * 200).ms, begin: const Offset(0.5, 0.5), end: const Offset(1.2, 1.2))),
         ),
       ),
     );

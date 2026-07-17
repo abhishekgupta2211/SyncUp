@@ -9,6 +9,7 @@ class Conversation {
   final String? lastMessageType;
   final DateTime? lastMessageAt;
   final int unreadCount;
+  final bool isArchived; // NEW
 
   const Conversation({
     required this.id,
@@ -20,6 +21,7 @@ class Conversation {
     this.lastMessageType,
     this.lastMessageAt,
     this.unreadCount = 0,
+    this.isArchived = false, // NEW
   });
 
   Conversation copyWith({
@@ -29,6 +31,7 @@ class Conversation {
     int? unreadCount,
     String? peerName,
     String? peerAvatarUrl,
+    bool? isArchived, // NEW
   }) {
     return Conversation(
       id: id,
@@ -40,6 +43,7 @@ class Conversation {
       lastMessageType: lastMessageType ?? this.lastMessageType,
       lastMessageAt: lastMessageAt ?? this.lastMessageAt,
       unreadCount: unreadCount ?? this.unreadCount,
+      isArchived: isArchived ?? this.isArchived, // NEW
     );
   }
 }

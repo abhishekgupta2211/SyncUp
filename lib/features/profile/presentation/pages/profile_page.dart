@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_avatar.dart';
+import '../../../../core/widgets/music_player_widget.dart';
 import '../../../auth/data/providers/auth_provider.dart';
 import '../../../settings/presentation/pages/appearance_screen.dart';
 import '../../../settings/presentation/pages/chat_settings_screen.dart';
@@ -13,6 +14,7 @@ import '../../../settings/presentation/pages/notification_settings_screen.dart';
 import '../../../settings/presentation/pages/privacy_settings_screen.dart';
 import '../../data/models/profile.dart';
 import 'edit_profile_screen.dart';
+import 'profile_visitors_page.dart';
 
 /// Profile tab — avatar, name, status line, and settings menu. Phase 0 shows a
 /// placeholder identity; real profile data lands with auth (Phase 1).
@@ -47,6 +49,26 @@ class ProfilePage extends StatelessWidget {
                     name: profile?.displayName ?? 'Your Name',
                     avatarUrl: profile?.avatarUrl,
                     radius: 52.r,
+                  ),
+                  Positioned(
+                    left: 0,
+                    bottom: 0,
+                    child: GestureDetector(
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('AI is enhancing your avatar... ✨'), duration: Duration(seconds: 2)),
+                        );
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(6.r),
+                        decoration: BoxDecoration(
+                          color: Colors.purple,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: theme.scaffoldBackgroundColor, width: 2),
+                        ),
+                        child: Icon(Icons.auto_awesome, size: 14.r, color: Colors.white),
+                      ),
+                    ),
                   ),
                   Positioned(
                     right: 0,
@@ -95,6 +117,11 @@ class ProfilePage extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                IconButton(
+                  onPressed: () => _showQRCode(context, profile),
+                  icon: Icon(Icons.qr_code_2, size: 24.r, color: theme.colorScheme.primary),
+                  tooltip: 'Share Profile QR',
+                ),
                 Text(
                   profile?.displayName ?? 'Your Name',
                   style: theme.textTheme.titleLarge?.copyWith(
@@ -113,6 +140,25 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
           if (profile != null) ...[
+            SizedBox(height: 8.h),
+            Center(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.military_tech, size: 14.r, color: Colors.blueAccent),
+                    SizedBox(width: 4.w),
+                    Text('Level 5 - Vibe Master', style: TextStyle(fontSize: 10.sp, color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            ),
             SizedBox(height: 2.h),
             Center(
               child: Row(
@@ -176,6 +222,13 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
           ],
+          if (profile?.theme_song_url != null)
+            MusicPlayerWidget(
+              songName: profile!.theme_song_name!,
+              artist: profile.theme_song_artist!,
+              url: profile.theme_song_url!,
+              coverUrl: profile.theme_song_cover!,
+            ),
           if (profile?.interests != null && profile!.interests.isNotEmpty) ...[
             SizedBox(height: 16.h),
             Padding(
@@ -211,6 +264,19 @@ class ProfilePage extends StatelessWidget {
               onTap: () {
                 if (profile != null) _openEdit(context, profile);
               }),
+          _MenuTile(
+              icon: Icons.vpn_key_outlined,
+              label: 'My Secret Box 🕵️',
+              onTap: () => _showSecretBox(context)),
+          _MenuTile(
+              icon: Icons.local_fire_department_outlined,
+              label: 'AI Profile Roast 🔥',
+              onTap: () => _showAIRoast(context, profile)),
+          if (profile?.isVip == true)
+            _MenuTile(
+                icon: Icons.visibility_outlined,
+                label: 'Profile Visitors',
+                onTap: () => _push(context, const ProfileVisitorsPage())),
           _MenuTile(
               icon: Icons.lock_outline,
               label: 'Privacy',
@@ -292,6 +358,95 @@ class ProfilePage extends StatelessWidget {
     if (confirmed == true && context.mounted) {
       await context.read<AuthProvider>().signOut();
     }
+  }
+
+  void _showQRCode(BuildContext context, Profile? profile) {
+    if (profile == null) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+        title: const Text('My Profile QR', textAlign: TextAlign.center),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(16.r),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: Icon(Icons.qr_code_2, size: 200.r, color: Colors.black),
+            ),
+            SizedBox(height: 16.h),
+            Text(profile.displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(profile.atUsername, style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+        ],
+      ),
+    );
+  }
+
+  void _showSecretBox(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24.r))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.all(24.r),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('🕵️ Secret Vibe Box', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+            SizedBox(height: 12.h),
+            const Text('People can send you anonymous messages! Tap to copy your secret link.', textAlign: TextAlign.center),
+            SizedBox(height: 24.h),
+            Container(
+              padding: EdgeInsets.all(16.r),
+              decoration: BoxDecoration(color: Colors.pinkAccent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16.r)),
+              child: const Text('syncup.ai/secret/user123', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.pinkAccent)),
+            ),
+            SizedBox(height: 24.h),
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(ctx),
+              icon: const Icon(Icons.copy),
+              label: const Text('Copy Link & Share'),
+            ),
+            SizedBox(height: 12.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAIRoast(BuildContext context, Profile? profile) {
+    if (profile == null) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+        title: const Text('AI Profile Roast 🔥', textAlign: TextAlign.center),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.auto_awesome, color: Colors.orange, size: 40),
+            SizedBox(height: 16.h),
+            Text(
+              "AI Roast: \"Level ${profile.social_level} and still using '${profile.statusLine}'? Your vibe is like a low-battery notification—waiting for a spark but mostly just annoying. 😂\"",
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Ouch! Cool.')),
+          FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('Share Roast')),
+        ],
+      ),
+    );
   }
 }
 

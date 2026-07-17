@@ -89,6 +89,16 @@ Future<void> showMessageActions(
                 ),
               ],
               _ActionRow(
+                icon: Icons.lock_outline,
+                label: 'Lock this chat',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Chat moved to Secure Vault! 🔒')),
+                  );
+                },
+              ),
+              _ActionRow(
                 icon: Icons.delete_outline,
                 label: 'Delete for me',
                 onTap: () {

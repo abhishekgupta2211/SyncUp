@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-
 import '../../../../core/widgets/empty_state.dart';
 import '../../data/providers/feed_provider.dart';
 import '../../presentation/widgets/comments_sheet.dart';
 import '../../presentation/widgets/post_card.dart';
 import '../../../profile/presentation/pages/leaderboard_page.dart';
 
-/// The Feed tab — permanent friend-only posts (newest first).
 class FeedPage extends StatefulWidget {
   const FeedPage({super.key});
 
@@ -36,6 +35,7 @@ class _FeedPageState extends State<FeedPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildShoutoutBanner(theme),
           Padding(
             padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 8.h),
             child: Row(
@@ -102,6 +102,32 @@ class _FeedPageState extends State<FeedPage> {
                           },
                         ),
                       ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShoutoutBanner(ThemeData theme) {
+    return Container(
+      width: double.infinity,
+      height: 36.h,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [theme.colorScheme.primary, Colors.purpleAccent]),
+      ),
+      child: Row(
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12.w),
+            child: const Icon(Icons.campaign, color: Colors.white, size: 18),
+          ),
+          Expanded(
+            child: const Text(
+              "Global Shoutout: user_abhishek just joined the Top 10 Leaderboard! 🔥",
+              style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 3.seconds),
           ),
         ],
       ),

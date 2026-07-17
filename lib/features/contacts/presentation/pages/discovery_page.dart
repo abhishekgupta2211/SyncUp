@@ -33,13 +33,17 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
   Future<void> _load() async {
     try {
       final res = await _repo.getSuggestedUsers();
-      if (mounted) setState(() { 
-        _allUsers = res;
-        _users = res; 
-        _loading = false; 
-      });
+      if (mounted) {
+        setState(() { 
+          _allUsers = res;
+          _users = res; 
+          _loading = false; 
+        });
+      }
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -61,9 +65,18 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
       if (_currentIndex < _users!.length - 1) {
         _currentIndex++;
       } else {
-        _users = []; // Out of users
+        _currentIndex = 0; // Loop back or refresh
       }
     });
+  }
+
+  void _shakeToVibe() {
+    if (_users == null || _users!.isEmpty) return;
+    final randomIdx = DateTime.now().millisecond % _users!.length;
+    setState(() => _currentIndex = randomIdx);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('✨ Phone Shaked! Found a random vibe match for you!'), duration: Duration(seconds: 2)),
+    );
   }
 
   void _open(Profile p) async {
@@ -89,7 +102,10 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Vibe Match'),
-        actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))],
+        actions: [
+          IconButton(onPressed: _shakeToVibe, icon: const Icon(Icons.auto_fix_normal), tooltip: 'Shake to Vibe'),
+          IconButton(onPressed: _load, icon: const Icon(Icons.refresh)),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

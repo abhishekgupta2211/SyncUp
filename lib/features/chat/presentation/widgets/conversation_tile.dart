@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
@@ -62,18 +63,28 @@ class ConversationTile extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 2.h),
-                  Text(
-                    preview,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: hasUnread
-                          ? theme.colorScheme.onSurface.withValues(alpha: 0.85)
-                          : theme.colorScheme.onSurface.withValues(alpha: 0.55),
-                      fontWeight:
-                          hasUnread ? FontWeight.w600 : FontWeight.w400,
+                  if (conversation.peerName.length % 7 == 0) // Simulation
+                    Text(
+                      'typing...',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ).animate(onPlay: (c) => c.repeat()).fade(duration: 500.ms)
+                  else
+                    Text(
+                      preview,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: hasUnread
+                            ? theme.colorScheme.onSurface.withValues(alpha: 0.85)
+                            : theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                        fontWeight:
+                            hasUnread ? FontWeight.w600 : FontWeight.w400,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
