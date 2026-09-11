@@ -115,8 +115,13 @@ class _MaintenancePageState extends State<MaintenancePage> {
                         _sectionTitle(theme, 'REMINDERS'),
                         SizedBox(height: 12.h),
                         const _ReminderCard(title: 'Oil Change Due', subtitle: 'At 12,500 KM', icon: Icons.timer_rounded),
-                        SizedBox(height: 24.h),
+                        SizedBox(height: 8.h),
                       ],
+                      // NEW: Chain health reminder
+                      _sectionTitle(theme, 'CHAIN HEALTH'),
+                      SizedBox(height: 8.h),
+                      const _ReminderCard(title: 'Chain Clean & Lube', subtitle: 'Recommended every 500 KM.', icon: Icons.link_rounded),
+                      SizedBox(height: 24.h),
                       _sectionTitle(theme, 'SERVICE HISTORY'),
                       SizedBox(height: 12.h),
                       if (_logs.isEmpty)
