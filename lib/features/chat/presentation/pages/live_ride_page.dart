@@ -235,16 +235,17 @@ class _LiveRidePageState extends State<LiveRidePage> {
   }
 
   Widget _stat(String label, String val, String unit, ThemeData theme) {
+    final isSpeeding = label == 'SPEED' && double.parse(val) > 80.0;
     return Column(
       children: [
-        Text(label, style: TextStyle(color: Colors.white38, fontSize: 10.sp, fontWeight: FontWeight.bold)),
+        Text(label, style: TextStyle(color: isSpeeding ? Colors.red : Colors.white38, fontSize: 10.sp, fontWeight: FontWeight.bold)),
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Text(val, style: TextStyle(color: Colors.white, fontSize: 24.sp, fontWeight: FontWeight.w900)),
+            Text(val, style: TextStyle(color: isSpeeding ? Colors.red : Colors.white, fontSize: 24.sp, fontWeight: FontWeight.w900)),
             SizedBox(width: 2.w),
-            Text(unit, style: TextStyle(color: Colors.white38, fontSize: 8.sp)),
+            Text(unit, style: TextStyle(color: isSpeeding ? Colors.red : Colors.white38, fontSize: 8.sp)),
           ],
         ),
       ],
