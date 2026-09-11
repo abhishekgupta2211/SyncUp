@@ -35,7 +35,10 @@ class AchievementsPage extends StatelessWidget {
   Widget _header(ThemeData theme, Profile profile) {
     return Column(
       children: [
-        Icon(Icons.emoji_events_rounded, size: 80.r, color: Colors.amber),
+        Icon(Icons.emoji_events_rounded, size: 80.r, color: Colors.amber)
+            .animate(onPlay: (c) => c.repeat())
+            .shimmer(duration: 2.seconds, color: Colors.white38)
+            .scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1), duration: 1.seconds, curve: Curves.easeInOut),
         SizedBox(height: 16.h),
         Text('Level ${profile.socialLevel} Rider', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
         Text('${profile.xpPoints} Vibe Points', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
