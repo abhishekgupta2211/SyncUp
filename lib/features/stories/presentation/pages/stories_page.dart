@@ -87,6 +87,7 @@ class _StoriesPageState extends State<StoriesPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isNight = DateTime.now().hour > 18 || DateTime.now().hour < 6;
 
     if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
@@ -101,7 +102,7 @@ class _StoriesPageState extends State<StoriesPage> {
             markers: _markers,
             myLocationEnabled: true,
             onMapCreated: (c) => _mapController = c,
-            style: theme.brightness == Brightness.dark ? _darkMapStyle : null,
+            style: isNight ? _darkMapStyle : null,
           ),
           
           SafeArea(
