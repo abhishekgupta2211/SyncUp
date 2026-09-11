@@ -85,6 +85,11 @@ class ProfilePage extends StatelessWidget {
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
+                              if (profile?.ridingStyle != null) 
+                                Text(
+                                  '${profile!.ridingStyle} | ${profile.experienceYears}Y Exp',
+                                  style: theme.textTheme.labelSmall?.copyWith(color: Colors.white70),
+                                ),
                             ],
                           ),
                         ),
