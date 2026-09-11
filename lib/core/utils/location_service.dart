@@ -29,4 +29,11 @@ class LocationService {
   }
 
   static LatLng posToLatLng(Position pos) => LatLng(pos.latitude, pos.longitude);
+
+  static Future<void> sendEmergencyAlert(Position pos, String contactPhone) async {
+    // This is a placeholder for the real SMS/Alert logic
+    // In production, use 'url_launcher' or 'flutter_sms' to send the location link
+    final googleMapsUrl = 'https://www.google.com/maps/search/?api=1&query=${pos.latitude},${pos.longitude}';
+    debugPrint('EMERGENCY ALERT to $contactPhone: Rider in trouble at $googleMapsUrl');
+  }
 }
