@@ -58,7 +58,26 @@ class _ChatsPageState extends State<ChatsPage> {
     });
   }
 
-  void _startRide(Map<String, dynamic> ride) {
+  void _startRide(Map<String, dynamic> ride) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('SAFETY CHECK 🛡️'),
+        content: const Text('Are you wearing your helmet and protective gear? Safety is our priority.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('WAIT')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true), 
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            child: const Text('READY TO RIDE', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => LiveRidePage(rideData: ride)),
     ).then((_) => _fetchRealRides());
