@@ -121,7 +121,13 @@ class _MaintenancePageState extends State<MaintenancePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text('TOTAL MAINTENANCE SPENT', style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
-                            Text('₹${totalCost.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                            Row(
+                              children: [
+                                Text('₹${totalCost.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                                const Spacer(),
+                                const Icon(Icons.analytics_outlined, color: Colors.white24, size: 32),
+                              ],
+                            ),
                           ],
                         ),
                       ),
