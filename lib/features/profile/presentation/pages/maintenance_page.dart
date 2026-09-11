@@ -108,9 +108,23 @@ class _MaintenancePageState extends State<MaintenancePage> {
               itemCount: _logs.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
+                  final totalCost = _logs.fold<double>(0, (sum, item) => sum + (item['cost'] as num).toDouble());
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(16.r),
+                        margin: EdgeInsets.only(bottom: 24.h),
+                        decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(16.r)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('TOTAL MAINTENANCE SPENT', style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
+                            Text('₹${totalCost.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                          ],
+                        ),
+                      ),
                       if (_logs.any((l) => l['next_service_at'] != null)) ...[
                         _sectionTitle(theme, 'REMINDERS'),
                         SizedBox(height: 12.h),
