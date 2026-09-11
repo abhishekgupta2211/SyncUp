@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/supabase/supabase_service.dart';
 import '../../../auth/data/providers/auth_provider.dart';
 import '../../../notifications/presentation/widgets/notifications_bell.dart';
@@ -74,9 +75,7 @@ class _ChatsPageState extends State<ChatsPage> {
         ],
       ),
     );
-
     if (confirmed != true) return;
-
     if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => LiveRidePage(rideData: ride)),
@@ -169,44 +168,6 @@ class _ChatsPageState extends State<ChatsPage> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: Container(
-                    padding: EdgeInsets.all(16.r),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFF2C3E50), Color(0xFF4CA1AF)]),
-                      borderRadius: BorderRadius.circular(20.r),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.wb_cloudy_rounded, color: Colors.white, size: 40),
-                        SizedBox(width: 16.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('WEATHER AT YOUR LOCATION', style: TextStyle(color: Colors.white70, fontSize: 10.sp, fontWeight: FontWeight.bold)),
-                              const Text('Cloudy • 22°C', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-                              Text('Perfect for a long cruise! 🏍️', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12)),
-                            ],
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Icon(Icons.water_drop, color: Colors.white70, size: 14),
-                            Text('12%', style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              SliverToBoxAdapter(child: SizedBox(height: 20.h)),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
                   child: Row(
                     children: [
                       Expanded(
@@ -247,34 +208,7 @@ class _ChatsPageState extends State<ChatsPage> {
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final ride = _upcomingRides[index];
-                        return Container(
-                          margin: EdgeInsets.only(bottom: 12.h),
-                          padding: EdgeInsets.all(12.r),
-                          decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(16.r), border: Border.all(color: theme.dividerColor)),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.calendar_today_rounded, size: 20, color: Colors.white24),
-                              SizedBox(width: 12.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(ride['title'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    Text('To: ${ride['destination']?['name'] ?? 'Dest'}', style: theme.textTheme.labelSmall),
-                                  ],
-                                ),
-                              ),
-                              ElevatedButton(
-                                onPressed: () => _startRide(ride),
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.green, visualDensity: VisualDensity.compact),
-                                child: const Text('START', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                      (context, index) => _RideTile(context, _upcomingRides[index]),
                       childCount: _upcomingRides.length,
                     ),
                   ),
@@ -284,6 +218,38 @@ class _ChatsPageState extends State<ChatsPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _RideTile(BuildContext context, dynamic ride) {
+    final theme = Theme.of(context);
+    final difficulty = ride['difficulty']?.toString().toLowerCase() ?? 'normal';
+    final diffColor = difficulty == 'hard' ? Colors.red : (difficulty == 'moderate' ? Colors.orange : Colors.green);
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.all(12.r),
+      decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(16.r), border: Border.all(color: theme.dividerColor)),
+      child: Row(
+        children: [
+          Icon(Icons.terrain_rounded, size: 20, color: diffColor),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(ride['title'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text('To: ${ride['destination']?['name'] ?? 'Dest'}', style: theme.textTheme.labelSmall),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => _startRide(ride),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, visualDensity: VisualDensity.compact),
+            child: const Text('START', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
