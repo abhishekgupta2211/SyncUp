@@ -1,86 +1,59 @@
-# 🚀 SyncUp AI - The Next-Gen AI Social Hub
+# 🏍️ RevvRide - Born to Ride. Built to Connect.
 
-**SyncUp** is not just a chat app; it's a complete social ecosystem powered by Artificial Intelligence. Built with **Flutter** and **Supabase**, it combines the best features of Instagram, Snapchat, and Tinder with an advanced Multimodal AI.
+RevvRide is a premium, production-quality social ecosystem and ride management platform built specifically for motorcycle enthusiasts. From real-time GPS tracking to community-driven ride planning, RevvRide is the ultimate digital hub for the pack.
 
----
+![RevvRide Banner](https://images.unsplash.com/photo-1558981403-c5f91cbba527?q=80&w=1200&auto=format&fit=crop)
 
-## ✨ Key Features
+## ✨ Core Features
 
-### 🤖 1. Advanced SyncUp AI (Multimodal)
-- **AI Vision:** Send images to AI to analyze and discuss them.
-- **AI Personalities:** Switch between Friendly, Professional, Funny, or Flirty vibes.
-- **AI Art Studio:** Generate art using simple text commands like `/draw`.
-- **AI Matchmaker:** Get insights on why you match with someone based on your shared interests.
-- **AI Bio Magic:** Automatically generate a killer profile bio using your interests.
-- **Smart Replies:** Context-aware AI suggestions for one-tap replies.
+### 🏁 Ride Management
+- **Real-Time GPS Tracking:** Measure speed, distance, and duration using real device sensors.
+- **Smart Ride Planner:** Create solo or group rides with waypoints, difficulty levels, and safety checks.
+- **Live Group Location:** Broadcast your location to your pack in real-time using Supabase Realtime.
 
-### 📸 2. Multimedia & Privacy (Snapchat Style)
-- **SyncSnaps:** Send view-once photos/videos that self-destruct after being opened.
-- **Vanish Mode:** Private messaging where chats disappear after being read.
-- **Story Rings:** Colorful gradient rings around user avatars for active stories.
-- **Voice Notes:** Crystal clear audio messaging with waveform visualization.
+### 🏍️ The Digital Garage
+- **Manage Your Pack:** Add multiple motorcycles with detailed specs (CC, Year, Odometer).
+- **Maintenance Tracker:** Log every service, oil change, and repair. Get automatic reminders for chain maintenance.
+- **Fuel Logs:** Track every penny spent on fuel with historical logs.
+- **Secure Document Vault:** Store digital copies of Insurance and PUC (Coming Soon).
 
-### 💖 3. Smart Discovery (Tinder Style)
-- **Vibe Match:** Smooth swipe-to-discover cards with physics-based animations.
-- **Compatibility Meter:** AI-driven percentage score showing how well your vibes match.
-- **Interest Filtering:** Find people who share your passion for Music, Coding, Travel, and more.
+### 🏟️ Community & Social
+- **Rider Match:** Find nearby bikers with similar riding styles or bikes.
+- **Pack Chats:** 1:1 and Group messaging with snap-style disappearing media.
+- **Riding Clubs:** Join or create global lounges for Tourers, Stunters, and Adventure seekers.
+- **Leaderboards:** Compete for the title of "Centurion" or "Vagabond" based on real KM covered.
 
-### 🏆 4. Gamification & Economy
-- **Global Leaderboard:** Compete in the "Top Vibes" Hall of Fame.
-- **SyncUp Coins:** Earn and manage your virtual coin balance.
-- **Virtual Gifting:** Send Roses, Diamonds, and Crowns to impress your friends.
-- **Daily Streaks:** Maintain engagement with Snapchat-like fire streaks.
-
-### 🏠 5. Community & Lounges
-- **Public Lounges:** Join global themed chat rooms (Music, Love Cafe, Tech) and chat with everyone in real-time.
-- **Feed & Social:** Share permanent posts, like with animations, and bookmark favorites.
+### 🛡️ Safety Center
+- **One-Tap SOS:** Long-press emergency trigger with live location sharing.
+- **Medical ID:** Store Blood Group and Allergies for emergency responders.
+- **Safety Gear Prompt:** Mandatory helmet and gear checks before starting any ride.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** [Flutter](https://flutter.dev/) (Dart)
-- **Backend:** [Supabase](https://supabase.com/) (PostgreSQL, Realtime, Storage, Edge Functions)
-- **AI Engine:** Integrated Smart Logic (Knowledge Cloud Simulation)
-- **Real-time Comms:** Supabase Realtime Channels
-- **Video/Voice Calls:** [ZegoCloud](https://www.zegocloud.com/)
-- **Push Notifications:** Firebase Cloud Messaging (FCM)
-- **Animations:** Flutter Animate, Shimmer
-
----
-
-## 📸 UI/UX Highlights
-- **VIP Glow Aura:** Special rotating golden aura for VIP members.
-- **Love Meter:** Visual connection progress in chat headers.
-- **Glassmorphism:** Modern AI chat interface with blurred surfaces and gradients.
-- **Dynamic Themes:** Support for Light, Dark, and custom accent colors.
+- **Frontend:** Flutter & Dart
+- **Backend:** Supabase (PostgreSQL, Auth, Realtime, Edge Functions)
+- **Maps:** Google Maps SDK
+- **Communication:** ZegoCloud (Video & Audio Calling)
+- **State Management:** Provider
 
 ---
 
 ## 🚀 Getting Started
 
-1. **Clone the repo:**
-   ```bash
-   git clone https://github.com/your-username/syncup.git
-   ```
-2. **Setup environment:**
-   Create a `.env` file in the root and add your Supabase and ZegoCloud credentials.
-3. **Install dependencies:**
-   ```bash
-   flutter pub get
-   ```
-4. **Run the app:**
-   ```bash
-   flutter run
-   ```
+1. **Clone the repo:** `git clone https://github.com/abhishekgupta2211/SyncUp.git`
+2. **Environment Setup:** Add your Supabase and Google Maps keys to `.env`.
+3. **Run App:** `flutter run`
 
 ---
 
-## 📈 Optimization
-- **Size Reduced:** Built with `--split-per-abi` to reduce download size by 60%.
-- **Fast Media:** Automatic image compression before upload.
-- **Database Scalability:** Trigram-based search and optimized PostgreSQL indexes.
+## 🏆 Achievements & Badges
+Earn real badges based on your riding milestones:
+- ⭐ **First Ride:** Complete your first trip.
+- ⚡ **Centurion:** Ride for 100 KM.
+- 🏔️ **Vagabond:** Cover 1,000 KM.
+- 🎖️ **Veteran:** 5+ years of experience in the pack.
 
 ---
-
-**Developed with ❤️ by Abhishek**
+**Developed by [Abhishek Arvind](https://github.com/abhishekgupta2211) & AI Pair Extraordinaire** 🚀🔥
