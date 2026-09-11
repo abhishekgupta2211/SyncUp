@@ -12,8 +12,7 @@ import 'package:record/record.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../settings/data/providers/settings_provider.dart';
 
-/// Composer: emoji picker + text + gallery/camera + voice recording, and a
-/// gradient send button.
+/// Composer: emoji picker + text + attachment menu (gallery/camera/games/etc) + voice recording.
 class ChatInputBar extends StatefulWidget {
   const ChatInputBar({
     super.key,
@@ -27,7 +26,7 @@ class ChatInputBar extends StatefulWidget {
 
   final ValueChanged<String> onSend;
   final ValueChanged<bool>? onTyping;
-  final Function(XFile file, {bool isSnap})? onPickImage; // UPDATED
+  final Function(XFile file, {bool isSnap})? onPickImage;
   final void Function(String path, int durationMs)? onSendVoice;
   final String? replyToText;
   final VoidCallback? onCancelReply;
@@ -44,7 +43,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
 
   bool _hasText = false;
   bool _showEmoji = false;
-  bool _vanishMode = false; // NEW
+  bool _vanishMode = false;
   Timer? _typingTimer;
   bool _typingSent = false;
 
@@ -116,15 +115,11 @@ class _ChatInputBarState extends State<ChatInputBar> {
       return;
     }
     final dir = await getTemporaryDirectory();
-    final path =
-        '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-    await _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc),
-        path: path);
+    final path = '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    await _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
     _recordPath = path;
     _recordElapsed = Duration.zero;
-    _stopwatch
-      ..reset()
-      ..start();
+    _stopwatch..reset()..start();
     setState(() => _recording = true);
     _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() => _recordElapsed += const Duration(seconds: 1));
@@ -141,9 +136,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
       widget.onSendVoice?.call(path, ms);
     } else {
       if (path != null) {
-        try {
-          await File(path).delete();
-        } catch (_) {}
+        try { await File(path).delete(); } catch (_) {}
       }
       _toast('Hold longer to record');
     }
@@ -153,9 +146,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
     _recordTimer?.cancel();
     await _recorder.stop();
     if (_recordPath != null) {
-      try {
-        await File(_recordPath!).delete();
-      } catch (_) {}
+      try { await File(_recordPath!).delete(); } catch (_) {}
     }
     setState(() => _recording = false);
   }
@@ -172,6 +163,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
     final randomGame = games[DateTime.now().millisecond % games.length];
     _controller.text = randomGame;
     _onChanged();
+    Navigator.pop(context);
     _toast('AI Arena: Challenge selected! 🎮');
   }
 
@@ -186,10 +178,12 @@ class _ChatInputBarState extends State<ChatInputBar> {
     final randomIcebreaker = icebreakers[DateTime.now().millisecond % icebreakers.length];
     _controller.text = randomIcebreaker;
     _onChanged();
+    Navigator.pop(context);
     _toast('AI Magic: Icebreaker ready! ✨');
   }
 
   void _showGiftSheet(ThemeData theme) {
+    Navigator.pop(context); // Close actions menu first
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24.r))),
@@ -231,10 +225,83 @@ class _ChatInputBarState extends State<ChatInputBar> {
     );
   }
 
+  void _showActionsMenu() {
+    final theme = Theme.of(context);
+    _focus.unfocus();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+        ),
+        padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 8.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Wrap(
+              runSpacing: 20.h,
+              spacing: 8.w,
+              alignment: WrapAlignment.start,
+              children: [
+                _actionItem(Icons.photo_library, 'Gallery', Colors.blue, () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.gallery);
+                }),
+                _actionItem(Icons.camera_alt, 'Camera', Colors.teal, () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.camera);
+                }),
+                _actionItem(Icons.auto_delete, 'Vanish', Colors.orange, () {
+                  setState(() => _vanishMode = !_vanishMode);
+                  Navigator.pop(ctx);
+                  _toast(_vanishMode ? 'Vanish mode ON 🔥' : 'Vanish mode OFF');
+                }),
+                _actionItem(Icons.sports_esports, 'Games', Colors.green, _sendAIGame),
+                _actionItem(Icons.camera, 'Snap', Colors.purple, () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.camera, isSnap: true);
+                }),
+                _actionItem(Icons.auto_fix_high, 'Icebreaker', Colors.amber, _sendIcebreaker),
+                _actionItem(Icons.card_giftcard, 'Gift', Colors.pink, () => _showGiftSheet(theme)),
+              ],
+            ),
+            SizedBox(height: 12.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _actionItem(IconData icon, String label, Color color, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 85.w,
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: onTap,
+            child: Container(
+              width: 56.r,
+              height: 56.r,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 28.r),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(label, style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
   void _toast(String msg) {
     if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(msg)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     }
   }
 
@@ -252,40 +319,28 @@ class _ChatInputBarState extends State<ChatInputBar> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SafeArea(
-      top: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (widget.replyToText != null) _replyPreview(theme),
-          Padding(
-            padding: EdgeInsets.fromLTRB(10.w, 6.h, 10.w, 8.h),
-            child: _recording ? _recordingBar(theme) : _inputRow(theme),
-          ),
-          if (_showEmoji)
-            SizedBox(
-              height: 280.h,
-              child: EmojiPicker(
-                textEditingController: _controller,
-                config: Config(
-                  height: 280.h,
-                  emojiViewConfig: EmojiViewConfig(
-                    backgroundColor: theme.colorScheme.surface,
-                    columns: 8,
-                    emojiSizeMax: 28,
-                  ),
-                  categoryViewConfig: CategoryViewConfig(
-                    backgroundColor: theme.colorScheme.surface,
-                    indicatorColor: theme.colorScheme.primary,
-                    iconColorSelected: theme.colorScheme.primary,
-                  ),
-                  bottomActionBarConfig:
-                      const BottomActionBarConfig(enabled: false),
-                ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (widget.replyToText != null) _replyPreview(theme),
+        Padding(
+          padding: EdgeInsets.fromLTRB(8.w, 8.h, 8.w, 8.h + MediaQuery.of(context).padding.bottom),
+          child: _recording ? _recordingBar(theme) : _inputRow(theme),
+        ),
+        if (_showEmoji)
+          SizedBox(
+            height: 280.h,
+            child: EmojiPicker(
+              textEditingController: _controller,
+              config: Config(
+                height: 280.h,
+                emojiViewConfig: EmojiViewConfig(backgroundColor: theme.colorScheme.surface, columns: 8, emojiSizeMax: 28),
+                categoryViewConfig: CategoryViewConfig(backgroundColor: theme.colorScheme.surface, indicatorColor: theme.colorScheme.primary, iconColorSelected: theme.colorScheme.primary),
+                bottomActionBarConfig: const BottomActionBarConfig(enabled: false),
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
@@ -296,26 +351,14 @@ class _ChatInputBarState extends State<ChatInputBar> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border(
-          left: BorderSide(color: theme.colorScheme.primary, width: 3),
-        ),
+        border: Border(left: BorderSide(color: theme.colorScheme.primary, width: 3)),
       ),
       child: Row(
         children: [
           Icon(Icons.reply, size: 16.r, color: theme.colorScheme.primary),
           SizedBox(width: 8.w),
-          Expanded(
-            child: Text(
-              widget.replyToText!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall,
-            ),
-          ),
-          GestureDetector(
-            onTap: widget.onCancelReply,
-            child: Icon(Icons.close, size: 18.r),
-          ),
+          Expanded(child: Text(widget.replyToText!, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodySmall)),
+          GestureDetector(onTap: widget.onCancelReply, child: Icon(Icons.close, size: 18.r)),
         ],
       ),
     );
@@ -328,27 +371,20 @@ class _ChatInputBarState extends State<ChatInputBar> {
       children: [
         Expanded(
           child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(26.r),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(28.r),
+              border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
             ),
-            padding: EdgeInsets.symmetric(horizontal: 6.w),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 IconButton(
-                  icon: Icon(
-                    _showEmoji
-                        ? Icons.keyboard_outlined
-                        : Icons.emoji_emotions_outlined,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    size: 22.r,
-                  ),
-                  onPressed: _toggleEmoji,
-                  padding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
-                  constraints:
-                      BoxConstraints.tightFor(width: 40.r, height: 40.r),
+                  icon: Icon(_showEmoji ? Icons.keyboard_outlined : Icons.emoji_emotions_outlined,
+                      color: theme.colorScheme.primary, size: 24.r),
+                  onPressed: _toggleEmoji,
                 ),
                 Expanded(
                   child: TextField(
@@ -356,105 +392,28 @@ class _ChatInputBarState extends State<ChatInputBar> {
                     focusNode: _focus,
                     minLines: 1,
                     maxLines: 5,
+                    style: theme.textTheme.bodyLarge?.copyWith(fontSize: 15.sp),
                     textCapitalization: TextCapitalization.sentences,
-                    textInputAction: enterToSend
-                        ? TextInputAction.send
-                        : TextInputAction.newline,
+                    textInputAction: enterToSend ? TextInputAction.send : TextInputAction.newline,
                     onSubmitted: enterToSend ? (_) => _send() : null,
-                    onTap: () {
-                      if (_showEmoji) setState(() => _showEmoji = false);
-                    },
+                    onTap: () { if (_showEmoji) setState(() => _showEmoji = false); },
                     decoration: const InputDecoration(
                       hintText: 'Type a message...',
-                      hintMaxLines: 1,
-                      isDense: true,
-                      filled: false,
                       border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                      contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                     ),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(
-                    _vanishMode ? Icons.auto_delete : Icons.auto_delete_outlined,
-                    color: _vanishMode ? Colors.orange : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    size: 20.r,
-                  ),
-                  onPressed: () {
-                    setState(() => _vanishMode = !_vanishMode);
-                    _toast(_vanishMode ? 'Vanish mode ON 🔥' : 'Vanish mode OFF');
-                  },
-                  padding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
-                  constraints: BoxConstraints.tightFor(width: 40.r, height: 40.r),
-                ),
-                IconButton(
-                  icon: Icon(Icons.sports_esports_outlined,
-                      color: Colors.greenAccent,
-                      size: 20.r),
-                  onPressed: _sendAIGame,
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                  constraints:
-                      BoxConstraints.tightFor(width: 40.r, height: 40.r),
-                ),
-                IconButton(
-                  icon: Icon(Icons.camera_alt_outlined,
-                      color: Colors.purpleAccent,
-                      size: 20.r),
-                  onPressed: () => _pickImage(ImageSource.camera, isSnap: true),
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                  constraints:
-                      BoxConstraints.tightFor(width: 40.r, height: 40.r),
-                ),
-                IconButton(
-                  icon: Icon(Icons.auto_fix_high,
-                      color: Colors.amber,
-                      size: 20.r),
-                  onPressed: _sendIcebreaker,
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                  constraints:
-                      BoxConstraints.tightFor(width: 40.r, height: 40.r),
-                ),
-                IconButton(
-                  icon: Icon(Icons.card_giftcard,
-                      color: theme.colorScheme.primary,
-                      size: 20.r),
-                  onPressed: () => _showGiftSheet(theme),
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                  constraints:
-                      BoxConstraints.tightFor(width: 40.r, height: 40.r),
-                ),
-                IconButton(
-                  icon: Icon(Icons.attach_file,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                      size: 20.r),
-                  onPressed: () => _pickImage(ImageSource.gallery),
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                  constraints:
-                      BoxConstraints.tightFor(width: 40.r, height: 40.r),
-                ),
-                IconButton(
-                  icon: Icon(Icons.photo_camera_outlined,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                      size: 20.r),
-                  onPressed: () => _pickImage(ImageSource.camera),
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                  constraints:
-                      BoxConstraints.tightFor(width: 40.r, height: 40.r),
+                  icon: Icon(Icons.add_circle_outline, color: theme.colorScheme.primary, size: 24.r),
+                  onPressed: _showActionsMenu,
                 ),
               ],
             ),
           ),
         ),
-        SizedBox(width: 8.w),
+        SizedBox(width: 10.w),
         GestureDetector(
           onTap: _hasText ? _send : _startRecording,
           child: _sendButton(_hasText ? Icons.send_rounded : Icons.mic),
@@ -465,28 +424,20 @@ class _ChatInputBarState extends State<ChatInputBar> {
 
   Widget _recordingBar(ThemeData theme) {
     String two(int n) => n.toString().padLeft(2, '0');
-    final label =
-        '${two(_recordElapsed.inMinutes)}:${two(_recordElapsed.inSeconds % 60)}';
+    final label = '${two(_recordElapsed.inMinutes)}:${two(_recordElapsed.inSeconds % 60)}';
     return Row(
       children: [
-        IconButton(
-          icon: Icon(Icons.delete_outline, color: AppColors.danger, size: 24.r),
-          onPressed: _cancelRecording,
-        ),
+        IconButton(icon: Icon(Icons.delete_outline, color: AppColors.danger, size: 24.r), onPressed: _cancelRecording),
         Expanded(
           child: Row(
             children: [
               Icon(Icons.fiber_manual_record, color: AppColors.danger, size: 14.r),
               SizedBox(width: 8.w),
-              Text('Recording  $label',
-                  style: theme.textTheme.bodyMedium),
+              Text('Recording  $label', style: theme.textTheme.bodyMedium),
             ],
           ),
         ),
-        GestureDetector(
-          onTap: _stopAndSendRecording,
-          child: _sendButton(Icons.send_rounded),
-        ),
+        GestureDetector(onTap: _stopAndSendRecording, child: _sendButton(Icons.send_rounded)),
       ],
     );
   }
@@ -499,11 +450,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
         gradient: AppColors.gradientFrom(Theme.of(context).colorScheme.primary),
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       child: AnimatedSwitcher(

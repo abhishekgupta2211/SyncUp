@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/supabase/supabase_service.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class LoungeListPage extends StatelessWidget {
   const LoungeListPage({super.key});
@@ -11,7 +12,7 @@ class LoungeListPage extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Public Lounges'),
+        title: const Text('Riding Clubs'),
         centerTitle: true,
       ),
       body: FutureBuilder(
@@ -24,36 +25,53 @@ class LoungeListPage extends StatelessWidget {
             itemCount: lounges.length,
             itemBuilder: (context, i) {
               final l = lounges[i];
-              return Card(
-                margin: EdgeInsets.only(bottom: 12.h),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+              return Container(
+                margin: EdgeInsets.only(bottom: 16.h, left: 16.w, right: 16.w),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(24.r),
+                  border: Border.all(color: theme.dividerColor),
+                ),
                 child: ListTile(
-                  contentPadding: EdgeInsets.all(12.r),
-                  leading: Text(l['icon'] ?? '💬', style: TextStyle(fontSize: 32.sp)),
-                  title: Text(l['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(l['description'] ?? ''),
-                  trailing: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Joining ${l['name']} Voice Room... 🎙️')),
-                      );
-                    },
-                    icon: const Icon(Icons.mic, size: 16),
-                    label: const Text('Live'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      foregroundColor: theme.colorScheme.primary,
-                      elevation: 0,
+                  contentPadding: EdgeInsets.all(16.r),
+                  leading: Container(
+                    width: 56.r,
+                    height: 56.r,
+                    decoration: BoxDecoration(
+                      color: AppColors.asphalt,
+                      borderRadius: BorderRadius.circular(16.r),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(l['icon'] ?? '🏍️', style: TextStyle(fontSize: 28.sp)),
+                  ),
+                  title: Text(
+                    l['name'],
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                  ),
+                  subtitle: Text(
+                    l['description'] ?? '',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  trailing: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: const Text(
+                      'JOIN',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10),
                     ),
                   ),
                   onTap: () {
-                    // Logic to open Lounge Chat Room
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Entering ${l['name']}...'))
+                      SnackBar(content: Text('Welcome to ${l['name']} Club! 🏁'))
                     );
                   },
                 ),
-              ).animate().fadeIn(delay: (i * 100).ms).slideX(begin: 0.1, end: 0);
+              ).animate().fadeIn(delay: (i * 100).ms).slideY(begin: 0.1, end: 0);
             },
           );
         },

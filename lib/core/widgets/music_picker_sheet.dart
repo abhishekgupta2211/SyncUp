@@ -10,7 +10,6 @@ class MusicPickerSheet extends StatefulWidget {
 }
 
 class _MusicPickerSheetState extends State<MusicPickerSheet> {
-  String _query = '';
   late List<Song> _songs;
 
   @override
@@ -21,7 +20,6 @@ class _MusicPickerSheetState extends State<MusicPickerSheet> {
 
   void _onSearch(String q) {
     setState(() {
-      _query = q;
       _songs = MusicService.searchSongs(q);
     });
   }
@@ -59,7 +57,7 @@ class _MusicPickerSheetState extends State<MusicPickerSheet> {
                     hintText: 'Search music...',
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
-                    fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                    fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30.r),
                       borderSide: BorderSide.none,

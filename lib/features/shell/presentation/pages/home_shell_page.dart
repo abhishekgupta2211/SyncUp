@@ -3,14 +3,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../chat/presentation/pages/chats_page.dart';
+import '../../../chat/presentation/pages/ride_management_page.dart';
 import '../../../feed/presentation/pages/feed_page.dart';
-import '../../../feed/presentation/pages/post_composer_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../stories/presentation/pages/stories_page.dart';
 
-/// Root scaffold: an [IndexedStack] of the four tabs with a notched bottom bar
-/// and an elevated center FAB that composes a new Feed post —
-/// Chats · Story · (+) · Feed · Profile.
+/// Root scaffold for the SyncUp Rider platform.
+/// HOME | EXPLORE | RIDE | COMMUNITY | PROFILE
 class HomeShellPage extends StatefulWidget {
   const HomeShellPage({super.key});
 
@@ -23,10 +22,11 @@ class _HomeShellPageState extends State<HomeShellPage> {
   late final PageController _pageController = PageController(initialPage: _index);
 
   static const _pages = [
-    ChatsPage(), // 0
-    StoriesPage(), // 1
-    FeedPage(), // 2
-    ProfilePage(), // 3
+    ChatsPage(),          // 0: Home (Dashboard)
+    StoriesPage(),        // 1: Explore (Maps)
+    RideManagementPage(), // 2: Ride Center
+    FeedPage(),           // 3: Community (Social)
+    ProfilePage(),        // 4: Profile (Garage)
   ];
 
   @override
@@ -35,19 +35,9 @@ class _HomeShellPageState extends State<HomeShellPage> {
     super.dispose();
   }
 
-  void _newPost() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PostComposerPage()),
-    );
-  }
-
   void _onSelect(int i) {
     setState(() => _index = i);
-    _pageController.animateToPage(
-      i,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOutCubic,
-    );
+    _pageController.jumpToPage(i);
   }
 
   @override
@@ -56,12 +46,10 @@ class _HomeShellPageState extends State<HomeShellPage> {
       body: PageView(
         controller: _pageController,
         onPageChanged: (i) => setState(() => _index = i),
-        physics: const NeverScrollableScrollPhysics(), // Only tap to change
+        physics: const NeverScrollableScrollPhysics(),
         children: _pages,
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: _PostFab(onTap: _newPost),
-      bottomNavigationBar: _NotchedBar(
+      bottomNavigationBar: _RiderBottomBar(
         index: _index,
         onSelect: _onSelect,
       ),
@@ -69,8 +57,8 @@ class _HomeShellPageState extends State<HomeShellPage> {
   }
 }
 
-class _NotchedBar extends StatelessWidget {
-  const _NotchedBar({required this.index, required this.onSelect});
+class _RiderBottomBar extends StatelessWidget {
+  const _RiderBottomBar({required this.index, required this.onSelect});
 
   final int index;
   final ValueChanged<int> onSelect;
@@ -78,43 +66,46 @@ class _NotchedBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8,
-      elevation: 12,
-      color: theme.colorScheme.surface,
-      padding: EdgeInsets.zero,
-      height: 62.h,
+    return Container(
+      height: 80.h,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(top: BorderSide(color: theme.dividerColor)),
+      ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _NavItem(
-            icon: Icons.chat_bubble_outline,
-            activeIcon: Icons.chat_bubble,
-            label: 'Chats',
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home_rounded,
+            label: 'Home',
             selected: index == 0,
             onTap: () => onSelect(0),
           ),
           _NavItem(
-            icon: Icons.amp_stories_outlined,
-            activeIcon: Icons.amp_stories,
-            label: 'Story',
+            icon: Icons.explore_outlined,
+            activeIcon: Icons.explore,
+            label: 'Explore',
             selected: index == 1,
             onTap: () => onSelect(1),
           ),
-          SizedBox(width: 64.w), // gap for the center FAB notch
-          _NavItem(
-            icon: Icons.dynamic_feed_outlined,
-            activeIcon: Icons.dynamic_feed,
-            label: 'Feed',
+          _RideActionButton(
             selected: index == 2,
             onTap: () => onSelect(2),
           ),
           _NavItem(
-            icon: Icons.person_outline,
-            activeIcon: Icons.person,
-            label: 'Profile',
+            icon: Icons.groups_outlined,
+            activeIcon: Icons.groups_rounded,
+            label: 'Social',
             selected: index == 3,
             onTap: () => onSelect(3),
+          ),
+          _NavItem(
+            icon: Icons.person_outline_rounded,
+            activeIcon: Icons.person_rounded,
+            label: 'Profile',
+            selected: index == 4,
+            onTap: () => onSelect(4),
           ),
         ],
       ),
@@ -142,60 +133,58 @@ class _NavItem extends StatelessWidget {
     final theme = Theme.of(context);
     final color = selected
         ? theme.colorScheme.primary
-        : theme.colorScheme.onSurface.withValues(alpha: 0.55);
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedScale(
-              scale: selected ? 1.14 : 1.0,
-              duration: const Duration(milliseconds: 240),
-              curve: Curves.easeOut,
-              child: Icon(selected ? activeIcon : icon, color: color, size: 22.r),
+        : theme.colorScheme.onSurface.withValues(alpha: 0.5);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(selected ? activeIcon : icon, color: color, size: 24.r),
+          SizedBox(height: 4.h),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+              fontSize: 10.sp,
             ),
-            SizedBox(height: 2.h),
-            Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: color,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _PostFab extends StatelessWidget {
-  const _PostFab({required this.onTap});
-
+class _RideActionButton extends StatelessWidget {
+  const _RideActionButton({required this.selected, required this.onTap});
+  final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 60.r,
-        height: 60.r,
+        width: 56.r,
+        height: 56.r,
         decoration: BoxDecoration(
-          gradient: AppColors.gradientFrom(primary),
+          color: selected ? theme.colorScheme.primary : AppColors.asphalt,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: primary.withValues(alpha: 0.5),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+              color: (selected ? theme.colorScheme.primary : Colors.black).withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Icon(Icons.add_rounded, color: Colors.white, size: 32.r),
+        child: Icon(
+          Icons.navigation_rounded,
+          color: Colors.white,
+          size: 28.r,
+        ),
       ),
     );
   }

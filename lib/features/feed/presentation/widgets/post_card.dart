@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
@@ -12,8 +11,7 @@ import '../../../../core/widgets/app_avatar.dart';
 import '../../data/models/post.dart';
 import '../../data/providers/feed_provider.dart';
 
-/// A single feed post rendered as a rounded card: author header, optional
-/// text/image/video body and a like + comment action row.
+/// A rugged card for the Rider Community.
 class PostCard extends StatelessWidget {
   const PostCard({
     super.key,
@@ -27,166 +25,109 @@ class PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final muted = theme.textTheme.bodySmall?.color ??
-        theme.colorScheme.onSurface.withValues(alpha: 0.6);
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.5);
     final me = SupabaseService.currentUserId ?? '';
     final text = post.text;
     final mediaUrl = post.mediaUrl;
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.4),
-        ),
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: theme.dividerColor),
       ),
-      child: GestureDetector(
-        onDoubleTap: () => context.read<FeedProvider>().toggleLike(post),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ---- Header ----
-            Padding(
-              padding: EdgeInsets.fromLTRB(12.w, 12.h, 4.w, 8.h),
-              child: Row(
-                children: [
-                  AppAvatar(
-                    name: post.authorName ?? 'User',
-                    avatarUrl: post.authorAvatar,
-                    radius: 20.r,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ---- Header ----
+          Padding(
+            padding: EdgeInsets.all(12.r),
+            child: Row(
+              children: [
+                AppAvatar(
+                  name: post.authorName ?? 'Rider',
+                  avatarUrl: post.authorAvatar,
+                  radius: 20.r,
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        post.authorName ?? 'Rider',
+                        style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+                      ),
+                      Text(
+                        '@${post.authorUsername ?? ''} • ${ChatTime.listLabel(post.createdAt)}',
+                        style: theme.textTheme.labelSmall?.copyWith(color: muted, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          post.authorName ?? 'User',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          '@${post.authorUsername ?? ''} · '
-                          '${ChatTime.listLabel(post.createdAt)}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                        ),
-                      ],
-                    ),
+                ),
+                if (post.isMine(me))
+                  IconButton(
+                    icon: Icon(Icons.more_horiz_rounded, color: muted),
+                    onPressed: () => _confirmDelete(context),
                   ),
-                  if (post.isMine(me))
-                    PopupMenuButton<String>(
-                      icon: Icon(Icons.more_vert, color: muted),
-                      onSelected: (v) {
-                        if (v == 'delete') _confirmDelete(context);
-                      },
-                      itemBuilder: (_) => const [
-                        PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Text('Delete'),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
+              ],
             ),
+          ),
 
-            // ---- Body: text ----
-            if (text != null && text.isNotEmpty)
-              Padding(
-                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 10.h),
-                child: _buildRichText(context, text, theme),
-              ),
-
-            // ---- Body: image ----
-            if (post.isImage && mediaUrl != null)
-              Padding(
-                padding: EdgeInsets.fromLTRB(12.w, 2.h, 12.w, 4.h),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14.r),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: 420.h),
-                    child: CachedNetworkImage(
+          // ---- Body: media ----
+          if (mediaUrl != null)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12.w),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16.r),
+                child: post.isVideo 
+                  ? _PostVideo(url: mediaUrl)
+                  : CachedNetworkImage(
                       imageUrl: mediaUrl,
                       fit: BoxFit.cover,
                       width: double.infinity,
-                      placeholder: (context, url) => Container(
-                        height: 240.h,
-                        color: theme.colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.4),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        height: 240.h,
-                        color: theme.colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.4),
-                        alignment: Alignment.center,
-                        child: Icon(Icons.broken_image_outlined, color: muted),
-                      ),
+                      placeholder: (context, url) => Container(height: 240.h, color: AppColors.asphalt),
                     ),
-                  ),
-                ),
-              ),
-
-            // ---- Body: video ----
-            if (post.isVideo && mediaUrl != null)
-              Padding(
-                padding: EdgeInsets.fromLTRB(12.w, 2.h, 12.w, 4.h),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14.r),
-                  child: _PostVideo(url: mediaUrl),
-                ),
-              ),
-
-            // ---- Actions ----
-            Padding(
-              padding: EdgeInsets.fromLTRB(6.w, 2.h, 6.w, 6.h),
-              child: Row(
-                children: [
-                  _ActionButton(
-                    key: ValueKey('like_${post.id}_${post.likedByMe}'),
-                    icon: post.likedByMe
-                        ? Icons.favorite
-                        : Icons.favorite_border,
-                    color: post.likedByMe ? AppColors.danger : muted,
-                    label: '${post.likeCount}',
-                    onTap: () => context.read<FeedProvider>().toggleLike(post),
-                  ).animate(target: post.likedByMe ? 1 : 0).scale(
-                        begin: const Offset(1, 1),
-                        end: const Offset(1.2, 1.2),
-                        duration: 150.ms,
-                        curve: Curves.easeOut,
-                      ).then().scale(
-                        begin: const Offset(1.2, 1.2),
-                        end: const Offset(1, 1),
-                        duration: 150.ms,
-                        curve: Curves.bounceOut,
-                      ),
-                  _ActionButton(
-                    icon: Icons.mode_comment_outlined,
-                    color: muted,
-                    label: '${post.commentCount}',
-                    onTap: onOpenComments,
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: Icon(
-                      post.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                      color: post.isBookmarked ? theme.colorScheme.primary : muted,
-                      size: 20.r,
-                    ),
-                    onPressed: () => context.read<FeedProvider>().toggleBookmark(post),
-                  ),
-                ],
               ),
             ),
-          ],
-        ),
+
+          // ---- Body: text ----
+          if (text != null && text.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
+              child: _buildRichText(context, text, theme),
+            ),
+
+          // ---- Actions ----
+          Padding(
+            padding: EdgeInsets.fromLTRB(8.w, 0, 8.w, 8.h),
+            child: Row(
+              children: [
+                _ActionButton(
+                  icon: post.likedByMe ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
+                  color: post.likedByMe ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                  label: post.likeCount.toString(),
+                  onTap: () => context.read<FeedProvider>().toggleLike(post),
+                ),
+                _ActionButton(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  color: theme.colorScheme.onSurface,
+                  label: post.commentCount.toString(),
+                  onTap: onOpenComments,
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: Icon(
+                    post.isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
+                    color: post.isBookmarked ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                  ),
+                  onPressed: () => context.read<FeedProvider>().toggleBookmark(post),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -197,18 +138,12 @@ class PostCard extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete post?'),
-        content: const Text('This can\'t be undone.'),
+        content: const Text('This post will be removed from the community feed.'),
         actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(
-              'Delete',
-              style: TextStyle(color: AppColors.danger),
-            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -222,40 +157,23 @@ class PostCard extends StatelessWidget {
       TextSpan(
         children: words.map((word) {
           if (word.startsWith('#')) {
-            return WidgetSpan(
-              child: GestureDetector(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Showing posts for $word... 🔍')),
-                  );
-                },
-                child: Text(
-                  '$word ',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+            return TextSpan(
+              text: '$word ',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w900,
               ),
             );
           }
-          return TextSpan(text: '$word ', style: theme.textTheme.bodyLarge);
+          return TextSpan(text: '$word ', style: theme.textTheme.bodyMedium);
         }).toList(),
       ),
     );
   }
 }
 
-/// A single icon + count action pill used in the card's bottom row.
 class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    super.key,
-    required this.icon,
-    required this.color,
-    required this.label,
-    required this.onTap,
-  });
-
+  const _ActionButton({required this.icon, required this.color, required this.label, required this.onTap});
   final IconData icon;
   final Color color;
   final String label;
@@ -263,21 +181,16 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12.r),
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20.r, color: color),
-            SizedBox(width: 6.w),
-            Text(
-              label,
-              style: theme.textTheme.bodyMedium?.copyWith(color: color),
-            ),
+            Icon(icon, size: 22.r, color: color),
+            SizedBox(width: 8.w),
+            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 13.sp)),
           ],
         ),
       ),
@@ -285,13 +198,9 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-/// Inline video player for a post: tap to play/pause, centred play overlay
-/// while paused. Keeps a fixed aspect ratio from the decoded stream.
 class _PostVideo extends StatefulWidget {
   const _PostVideo({required this.url});
-
   final String url;
-
   @override
   State<_PostVideo> createState() => _PostVideoState();
 }
@@ -307,23 +216,11 @@ class _PostVideoState extends State<_PostVideo> {
   }
 
   Future<void> _init() async {
-    final c = VideoPlayerController.networkUrl(Uri.parse(widget.url));
-    _controller = c;
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url));
     try {
-      await c.initialize();
-      if (!mounted) return;
-      setState(() => _ready = true);
-    } catch (_) {
-      // Leave the placeholder in place on failure.
-    }
-  }
-
-  void _toggle() {
-    final c = _controller;
-    if (c == null || !_ready) return;
-    setState(() {
-      c.value.isPlaying ? c.pause() : c.play();
-    });
+      await _controller!.initialize();
+      if (mounted) setState(() => _ready = true);
+    } catch (_) {}
   }
 
   @override
@@ -334,50 +231,18 @@ class _PostVideoState extends State<_PostVideo> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final c = _controller;
-    if (c == null || !_ready) {
-      return AspectRatio(
-        aspectRatio: 16 / 9,
-        child: Container(
-          color: theme.colorScheme.surfaceContainerHighest
-              .withValues(alpha: 0.4),
-          alignment: Alignment.center,
-          child: SizedBox(
-            width: 26.r,
-            height: 26.r,
-            child: const CircularProgressIndicator(strokeWidth: 2),
+    if (_controller == null || !_ready) return Container(height: 240.h, color: AppColors.asphalt, child: const Center(child: CircularProgressIndicator()));
+    return AspectRatio(
+      aspectRatio: _controller!.value.aspectRatio,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          VideoPlayer(_controller!),
+          IconButton(
+            onPressed: () => setState(() => _controller!.value.isPlaying ? _controller!.pause() : _controller!.play()),
+            icon: Icon(_controller!.value.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 50.r, color: Colors.white70),
           ),
-        ),
-      );
-    }
-
-    final ratio =
-        c.value.aspectRatio > 0 ? c.value.aspectRatio : 16 / 9;
-    return GestureDetector(
-      onTap: _toggle,
-      child: AspectRatio(
-        aspectRatio: ratio,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            VideoPlayer(c),
-            if (!c.value.isPlaying)
-              Container(
-                width: 56.r,
-                height: 56.r,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.45),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.play_arrow,
-                  color: Colors.white,
-                  size: 34.r,
-                ),
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }

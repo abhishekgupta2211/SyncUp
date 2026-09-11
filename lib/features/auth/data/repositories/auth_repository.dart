@@ -13,22 +13,15 @@ class AuthRepository {
   Session? get currentSession => _client.auth.currentSession;
   Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
 
-  Future<AuthResponse> signUp({
-    required String email,
-    required String password,
-  }) {
-    return _client.auth.signUp(email: email, password: password);
+  Future<void> signInWithMagicLink(String email) {
+    return _client.auth.signInWithOtp(
+      email: email,
+      emailRedirectTo: 'io.supabase.lovechat://login-callback/',
+    );
   }
 
-  Future<AuthResponse> signIn({
-    required String email,
-    required String password,
-  }) {
-    return _client.auth.signInWithPassword(email: email, password: password);
-  }
-
-  Future<void> resendSignupEmail(String email) {
-    return _client.auth.resend(type: OtpType.signup, email: email);
+  Future<AuthResponse> signInAnonymously() {
+    return _client.auth.signInAnonymously();
   }
 
   Future<void> signOut() => _client.auth.signOut();
@@ -57,6 +50,8 @@ class AuthRepository {
     required String userId,
     required String username,
     required String displayName,
+    String? ridingStyle,
+    int experienceYears = 0,
   }) async {
     final updated = await _client
         .from(Tables.profiles)
@@ -64,6 +59,8 @@ class AuthRepository {
           'id': userId,
           'username': username,
           'display_name': displayName,
+          'riding_style': ridingStyle,
+          'experience_years': experienceYears,
         })
         .select()
         .single();
@@ -79,11 +76,17 @@ class AuthRepository {
     required String statusLine,
     String? bio,
     List<String>? interests,
-    String? themeSongName,   // NEW
-    String? themeSongArtist, // NEW
-    String? themeSongUrl,    // NEW
-    String? themeSongCover,  // NEW
+    String? themeSongName,
+    String? themeSongArtist,
+    String? themeSongUrl,
+    String? themeSongCover,
     String? avatarUrl,
+    String? ridingStyle,
+    int? experienceYears,
+    String? bloodGroup,
+    String? allergies,
+    String? emergencyContactName,
+    String? emergencyContactPhone,
   }) async {
     final payload = <String, dynamic>{
       'display_name': displayName,
@@ -95,6 +98,12 @@ class AuthRepository {
       'theme_song_artist': themeSongArtist,
       'theme_song_url': themeSongUrl,
       'theme_song_cover': themeSongCover,
+      'riding_style': ridingStyle,
+      'experience_years': experienceYears,
+      'blood_group': bloodGroup,
+      'allergies': allergies,
+      'emergency_contact_name': emergencyContactName,
+      'emergency_contact_phone': emergencyContactPhone,
     };
     if (avatarUrl != null) payload['avatar_url'] = avatarUrl;
     final updated = await _client

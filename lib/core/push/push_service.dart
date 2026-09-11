@@ -7,15 +7,9 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../supabase/supabase_service.dart';
-
-/// Background/terminated handler. Must be a top-level function. FCM auto-displays
-/// `notification` payloads in the system tray, so there's nothing to render here.
 @pragma('vm:entry-point')
 Future<void> firebaseBackgroundHandler(RemoteMessage message) async {}
 
-/// Wires FCM push to the app: initialises Firebase, asks for the notification
-/// permission, and keeps the device's token registered against the signed-in
-/// user (so the `push` Edge Function can reach them when the app is closed).
 class PushService {
   PushService._();
 
@@ -23,8 +17,6 @@ class PushService {
   static String? _token;
   static StreamSubscription<AuthState>? _authSub;
 
-  /// Call once at startup, after Supabase is initialised. Safe to call even if
-  /// Firebase isn't configured yet (missing google-services.json) — it no-ops.
   static Future<void> init() async {
     if (_ready) return;
     try {

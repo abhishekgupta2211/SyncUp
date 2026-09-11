@@ -16,8 +16,8 @@ enum AuthStatus {
   authenticated,
 }
 
-/// App-lifetime auth state. Drives the [AuthGate] routing:
-/// splash → login/signup → (verify email) → @username onboarding → home.
+/// App-lifetime auth state. Drives the [AuthGate] routing.
+/// Passwordless magic link version.
 class AuthProvider extends ChangeNotifier {
   AuthProvider(this._repo) {
     _sub = _repo.authStateChanges.listen(_onAuthState);
@@ -45,11 +45,11 @@ class AuthProvider extends ChangeNotifier {
         if (state.session == null) {
           _set(AuthStatus.unauthenticated);
         } else {
-          await _loadProfileAndRoute();
+          await loadProfile();
         }
         break;
       case AuthChangeEvent.signedIn:
-        await _loadProfileAndRoute();
+        await loadProfile();
         break;
       case AuthChangeEvent.signedOut:
         _profile = null;
@@ -60,7 +60,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _loadProfileAndRoute() async {
+  Future<void> loadProfile() async {
     final uid = _repo.currentUser?.id;
     if (uid == null) {
       _set(AuthStatus.unauthenticated);
@@ -68,9 +68,8 @@ class AuthProvider extends ChangeNotifier {
     }
     try {
       var profile = await _repo.fetchProfile(uid);
-      // The signup trigger creates the row; guard a tiny race with one retry.
       if (profile == null) {
-        await Future.delayed(const Duration(milliseconds: 400));
+        await Future.delayed(const Duration(milliseconds: 500));
         profile = await _repo.fetchProfile(uid);
       }
       _profile = profile;
@@ -81,55 +80,36 @@ class AuthProvider extends ChangeNotifier {
         unawaited(CallService.onUserLogin(uid, profile.displayName));
       }
     } catch (_) {
-      // Transient load failure for a user who has a valid session: let them
-      // into the app rather than forcing the onboarding screen (which would
-      // overwrite an existing profile). Onboarding only triggers on a
-      // SUCCESSFUL fetch that returns null / a placeholder profile.
       _set(AuthStatus.authenticated);
-      final id = _repo.currentUser?.id;
-      if (id != null) {
-        unawaited(CallService.onUserLogin(id, _profile?.displayName ?? ''));
-      }
     }
   }
 
   // ---- Actions ----
-  Future<void> signUp(String email, String password) async {
+  Future<bool> requestMagicLink(String email) async {
     _begin();
     try {
-      final res = await _repo.signUp(email: email.trim(), password: password);
-      if (res.session == null) {
-        // "Confirm email" is ON → no session until verified.
-        _pendingEmail = email.trim();
-        _set(AuthStatus.awaitingVerification);
-      } else {
-        // Session already exists → route now (idempotent if signedIn also fires).
-        await _loadProfileAndRoute();
-      }
+      await _repo.signInWithMagicLink(email.trim());
+      _pendingEmail = email.trim();
+      _set(AuthStatus.awaitingVerification);
+      return true;
     } on AuthException catch (e) {
       _error = e.message;
+      return false;
     } catch (_) {
-      _error = 'Sign up failed. Please try again.';
+      _error = 'Failed to send login link. Try again.';
+      return false;
     } finally {
       _end();
     }
   }
 
-  Future<void> signIn(String email, String password) async {
+  Future<void> signInGuest() async {
     _begin();
     try {
-      await _repo.signIn(email: email.trim(), password: password);
-      // signedIn event routes via _onAuthState.
-    } on AuthException catch (e) {
-      final msg = e.message.toLowerCase();
-      if (msg.contains('not confirmed') || msg.contains('email not confirmed')) {
-        _pendingEmail = email.trim();
-        _set(AuthStatus.awaitingVerification);
-      } else {
-        _error = e.message;
-      }
-    } catch (_) {
-      _error = 'Login failed. Please try again.';
+      await _repo.signInAnonymously();
+      // _onAuthState will handle the rest
+    } catch (e) {
+      _error = e.toString();
     } finally {
       _end();
     }
@@ -137,20 +117,16 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> resendVerification() async {
     if (_pendingEmail == null) return;
-    _begin();
-    try {
-      await _repo.resendSignupEmail(_pendingEmail!);
-    } on AuthException catch (e) {
-      _error = e.message;
-    } catch (_) {
-      _error = 'Could not resend the email. Try again shortly.';
-    } finally {
-      _end();
-    }
+    await requestMagicLink(_pendingEmail!);
   }
 
   /// Returns true on success.
-  Future<bool> completeOnboarding(String username, String displayName) async {
+  Future<bool> completeOnboarding({
+    required String username,
+    required String displayName,
+    String? ridingStyle,
+    int experienceYears = 0,
+  }) async {
     final uid = _repo.currentUser?.id;
     if (uid == null) return false;
     _begin();
@@ -165,6 +141,8 @@ class AuthProvider extends ChangeNotifier {
         userId: uid,
         username: handle,
         displayName: displayName.trim(),
+        ridingStyle: ridingStyle,
+        experienceYears: experienceYears,
       );
       _set(AuthStatus.authenticated);
       unawaited(CallService.onUserLogin(uid, _profile!.displayName));
@@ -182,8 +160,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Saves edits from the Edit Profile screen. Pass [avatarUrl] only when a new
-  /// photo was uploaded. Returns true on success; sets [error] otherwise.
   Future<bool> saveProfile({
     required String displayName,
     required String username,
@@ -195,6 +171,12 @@ class AuthProvider extends ChangeNotifier {
     String? themeSongUrl,
     String? themeSongCover,
     String? avatarUrl,
+    String? ridingStyle,
+    int? experienceYears,
+    String? bloodGroup,
+    String? allergies,
+    String? emergencyContactName,
+    String? emergencyContactPhone,
   }) async {
     final uid = _repo.currentUser?.id;
     if (uid == null) return false;
@@ -220,6 +202,12 @@ class AuthProvider extends ChangeNotifier {
         themeSongUrl: themeSongUrl,
         themeSongCover: themeSongCover,
         avatarUrl: avatarUrl,
+        ridingStyle: ridingStyle,
+        experienceYears: experienceYears,
+        bloodGroup: bloodGroup,
+        allergies: allergies,
+        emergencyContactName: emergencyContactName,
+        emergencyContactPhone: emergencyContactPhone,
       );
       return true;
     } on PostgrestException catch (e) {
@@ -244,7 +232,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     _begin();
     try {
-      await PushService.unregister(); // drop the token while still authenticated
+      await PushService.unregister();
       await CallService.onUserLogout();
       await _repo.signOut();
     } finally {

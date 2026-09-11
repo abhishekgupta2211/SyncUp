@@ -13,6 +13,7 @@ import 'core/theme/theme_provider.dart';
 import 'features/ai/data/providers/ai_provider.dart';
 import 'features/auth/data/providers/auth_provider.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
+import 'features/chat/data/providers/conversation_list_provider.dart';
 import 'features/feed/data/providers/feed_provider.dart';
 import 'features/games/data/providers/games_lobby_provider.dart';
 import 'features/notifications/data/providers/notifications_provider.dart';
@@ -65,6 +66,9 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider<AIProvider>(
           create: (_) => AIProvider(),
+        ),
+        ChangeNotifierProvider<ConversationListProvider>(
+          create: (_) => ConversationListProvider(),
         ),
       ],
       child: const LoveChatApp(),

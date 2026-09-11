@@ -53,7 +53,7 @@ class ProfileVisitorsPage extends StatelessWidget {
                   isVip: viewer['is_vip'] ?? false,
                 ),
                 title: Text(viewer['display_name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('@${viewer['username']} · ${ChatTime.listLabel(DateTime.parse(v['viewed_at']))}'),
+                subtitle: Text('@${viewer['username']} · ${ChatTime.listLabel(DateTime.parse(v['viewed_at'].toString()))}'),
                 trailing: const Icon(Icons.chevron_right, size: 16),
               );
             },

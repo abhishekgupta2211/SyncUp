@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/supabase/supabase_service.dart';
 import '../../../../core/widgets/app_avatar.dart';
+import '../../../contacts/data/repositories/contacts_repository.dart';
 import '../pages/chat_thread_screen.dart';
 
 class NotesBar extends StatelessWidget {
@@ -65,7 +66,7 @@ class NotesBar extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(right: 16.w),
       child: GestureDetector(
-        onTap: () {
+        onTap: () async {
           // Open chat with the user
           final userId = n['user_id'];
           if (userId == SupabaseService.currentUserId) {
@@ -73,14 +74,27 @@ class NotesBar extends StatelessWidget {
             return;
           }
           
-          openChat(
-            context,
-            conversationId: '', // get_or_create will handle this in ChatThreadScreen
-            peerId: userId,
-            peerName: profile['display_name'],
-            peerUsername: '', // might need to fetch or ignore
-            peerAvatarUrl: profile['avatar_url'],
-          );
+          try {
+            final repo = ContactsRepository(SupabaseService.client);
+            final convId = await repo.getOrCreateConversation(userId);
+            
+            if (context.mounted) {
+              openChat(
+                context,
+                conversationId: convId,
+                peerId: userId,
+                peerName: profile['display_name'],
+                peerUsername: '', 
+                peerAvatarUrl: profile['avatar_url'],
+              );
+            }
+          } catch (_) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Could not open chat')),
+              );
+            }
+          }
         },
         child: Column(
           children: [

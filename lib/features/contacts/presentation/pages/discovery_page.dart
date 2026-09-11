@@ -17,12 +17,12 @@ class DiscoveryPage extends StatefulWidget {
 class _DiscoveryPageState extends State<DiscoveryPage> {
   final _repo = ContactsRepository(SupabaseService.client);
   List<Profile>? _users;
-  List<Profile>? _allUsers; // Cache all users
+  List<Profile>? _allUsers;
   bool _loading = true;
   int _currentIndex = 0;
-  String? _selectedInterest;
+  String? _selectedStyle;
 
-  final List<String> _interestOptions = ['All', 'Travel', 'Music', 'Coding', 'Fitness', 'Art', 'Movies'];
+  final List<String> _styleOptions = ['All', 'City Rider', 'Tourer', 'Adventure Rider', 'Sports Rider', 'Cruiser'];
 
   @override
   void initState() {
@@ -41,42 +41,27 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
         });
       }
     } catch (_) {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  void _filter(String interest) {
+  void _filter(String style) {
     setState(() {
-      _selectedInterest = interest == 'All' ? null : interest;
-      if (_selectedInterest == null) {
+      _selectedStyle = style == 'All' ? null : style;
+      if (_selectedStyle == null) {
         _users = _allUsers;
       } else {
-        _users = _allUsers?.where((p) => p.interests.contains(_selectedInterest)).toList();
+        _users = _allUsers?.where((p) => p.ridingStyle == _selectedStyle).toList();
       }
       _currentIndex = 0;
     });
   }
 
   void _next() {
-    if (_users == null) return;
-    setState(() {
-      if (_currentIndex < _users!.length - 1) {
-        _currentIndex++;
-      } else {
-        _currentIndex = 0; // Loop back or refresh
-      }
-    });
-  }
-
-  void _shakeToVibe() {
     if (_users == null || _users!.isEmpty) return;
-    final randomIdx = DateTime.now().millisecond % _users!.length;
-    setState(() => _currentIndex = randomIdx);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✨ Phone Shaked! Found a random vibe match for you!'), duration: Duration(seconds: 2)),
-    );
+    setState(() {
+      _currentIndex = (_currentIndex + 1) % _users!.length;
+    });
   }
 
   void _open(Profile p) async {
@@ -101,29 +86,20 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vibe Match'),
-        actions: [
-          IconButton(onPressed: _shakeToVibe, icon: const Icon(Icons.auto_fix_normal), tooltip: 'Shake to Vibe'),
-          IconButton(onPressed: _load, icon: const Icon(Icons.refresh)),
-        ],
+        title: const Text('RIDER MATCH'),
+        centerTitle: true,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                _buildInterestBar(theme),
+                _buildStyleBar(theme),
                 Expanded(
                   child: _users == null || _users!.isEmpty || _currentIndex >= _users!.length
                       ? _buildEmptyState(theme)
-                      : Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(20.r),
-                            child: Stack(
-                              children: [
-                                _buildCard(_users![_currentIndex], theme),
-                              ],
-                            ),
-                          ),
+                      : Padding(
+                          padding: EdgeInsets.all(20.r),
+                          child: _buildRiderCard(_users![_currentIndex], theme),
                         ),
                 ),
               ],
@@ -131,21 +107,21 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
     );
   }
 
-  Widget _buildInterestBar(ThemeData theme) {
+  Widget _buildStyleBar(ThemeData theme) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
       child: Row(
-        children: _interestOptions.map((interest) {
-          final isSelected = (_selectedInterest ?? 'All') == interest;
+        children: _styleOptions.map((style) {
+          final isSelected = (_selectedStyle ?? 'All') == style;
           return Padding(
             padding: EdgeInsets.only(right: 8.w),
-            child: FilterChip(
-              label: Text(interest),
+            child: ChoiceChip(
+              label: Text(style.toUpperCase(), style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.bold)),
               selected: isSelected,
-              onSelected: (_) => _filter(interest),
+              onSelected: (_) => _filter(style),
               selectedColor: theme.colorScheme.primary.withValues(alpha: 0.2),
-              checkmarkColor: theme.colorScheme.primary,
+              labelStyle: TextStyle(color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface),
             ),
           );
         }).toList(),
@@ -158,174 +134,110 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.people_outline, size: 80.r, color: theme.colorScheme.primary.withValues(alpha: 0.3)),
-          SizedBox(height: 20.h),
-          const Text('No more vibes to match right now!', style: TextStyle(fontWeight: FontWeight.bold)),
-          TextButton(onPressed: _load, child: const Text('Refresh Discovery')),
+          Icon(Icons.motorcycle_rounded, size: 80.r, color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+          SizedBox(height: 16.h),
+          const Text('No riders found in this category.', style: TextStyle(fontWeight: FontWeight.bold)),
+          TextButton(onPressed: _load, child: const Text('REFRESH LIST')),
         ],
       ),
     );
   }
 
-  Widget _buildCard(Profile p, ThemeData theme) {
+  Widget _buildRiderCard(Profile p, ThemeData theme) {
     return Dismissible(
       key: Key(p.id),
-      onDismissed: (direction) {
-        if (direction == DismissDirection.endToStart) {
-          // Ignored
-          _next();
-        } else {
-          // Matched/Liked
-          _open(p);
-        }
-      },
-      background: _swipeBackground(Alignment.centerLeft, Colors.green, Icons.favorite),
-      secondaryBackground: _swipeBackground(Alignment.centerRight, Colors.red, Icons.close),
+      onDismissed: (direction) => direction == DismissDirection.endToStart ? _next() : _open(p),
+      background: _swipeBg(Alignment.centerLeft, Colors.green, Icons.chat_rounded),
+      secondaryBackground: _swipeBg(Alignment.centerRight, Colors.red, Icons.close_rounded),
       child: Container(
         width: double.infinity,
-        height: 500.h,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30.r),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [theme.colorScheme.surface, theme.colorScheme.surfaceContainerHighest],
-          ),
-          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))],
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(32.r),
+          border: Border.all(color: theme.dividerColor),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
         ),
         child: Column(
           children: [
             Expanded(
               child: ClipRRect(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
-                child: AppAvatar(name: p.displayName, avatarUrl: p.avatarUrl, radius: 100.r),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+                child: Container(
+                  width: double.infinity,
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  child: AppAvatar(name: p.displayName, avatarUrl: p.avatarUrl, radius: 100.r),
+                ),
               ),
             ),
             Padding(
-              padding: EdgeInsets.all(20.r),
+              padding: EdgeInsets.all(24.r),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Text(p.displayName, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                      if (p.isVerified) Icon(Icons.verified, color: Colors.blue, size: 20.r),
-                      const Spacer(),
-                      Icon(Icons.music_note, color: theme.colorScheme.primary, size: 20.r),
+                      Text(p.displayName, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+                      if (p.isVerified) ...[SizedBox(width: 6.w), const Icon(Icons.verified, color: Colors.blueAccent, size: 20)],
                     ],
                   ),
-                  Text(p.atUsername, style: TextStyle(color: theme.colorScheme.primary)),
-                  SizedBox(height: 10.h),
-                  _buildVibeScore(p, theme),
-                  SizedBox(height: 10.h),
-                  _buildAIInsightButton(p, theme),
-                  SizedBox(height: 10.h),
-                  Text(p.statusLine, maxLines: 2, overflow: TextOverflow.ellipsis),
-                  if (p.bio != null) ...[
-                    SizedBox(height: 10.h),
-                    Text(p.bio!, style: theme.textTheme.bodySmall, maxLines: 3),
-                  ],
+                  Text(p.atUsername, style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 16.h),
+                  Row(
+                    children: [
+                      _tag(p.ridingStyle ?? 'Rider', theme.colorScheme.primary),
+                      SizedBox(width: 8.w),
+                      _tag('${p.experienceYears}Y EXP', Colors.orange),
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
+                  Text(p.statusLine, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodyMedium),
                 ],
               ),
             ),
-            _buildActionButtons(),
+            _buildActions(),
           ],
         ),
       ),
     ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack);
   }
 
-  Widget _buildVibeScore(Profile p, ThemeData theme) {
-    // Advanced Mock Logic: Calculate score based on interests length and a random factor
-    final score = 70 + (p.interests.length * 5) % 30;
+  Widget _tag(String label, Color color) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-      decoration: BoxDecoration(
-        color: Colors.pinkAccent.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: Colors.pinkAccent.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.bolt, size: 14.r, color: Colors.pinkAccent),
-          SizedBox(width: 4.w),
-          Text('$score% Vibe Match', style: TextStyle(fontSize: 12.sp, color: Colors.pinkAccent, fontWeight: FontWeight.bold)),
-        ],
-      ),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8.r), border: Border.all(color: color.withValues(alpha: 0.3))),
+      child: Text(label.toUpperCase(), style: TextStyle(color: color, fontSize: 10.sp, fontWeight: FontWeight.w900)),
     );
   }
 
-  Widget _buildAIInsightButton(Profile p, ThemeData theme) {
-    return GestureDetector(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-            title: Row(
-              children: [
-                const Icon(Icons.auto_awesome, color: Colors.amber),
-                SizedBox(width: 10.w),
-                const Text('AI Match Insight'),
-              ],
-            ),
-            content: Text("AI says: You both love '${p.interests.isNotEmpty ? p.interests.first : 'connecting'}'! Plus, your moods are perfectly in sync today. Go ahead, say hi! ✨❤️"),
-            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Nice!'))],
-          ),
-        );
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primary,
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.psychology_outlined, color: Colors.white, size: 16),
-            SizedBox(width: 6.w),
-            const Text('Why we match?', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _swipeBackground(Alignment align, Color color, IconData icon) {
+  Widget _swipeBg(Alignment align, Color color, IconData icon) {
     return Container(
       alignment: align,
       padding: EdgeInsets.symmetric(horizontal: 40.w),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(30.r)),
-      child: Icon(icon, color: Colors.white, size: 50.r),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(32.r)),
+      child: Icon(icon, color: Colors.white, size: 48.r),
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActions() {
     return Padding(
-      padding: EdgeInsets.only(bottom: 20.h),
+      padding: EdgeInsets.only(bottom: 24.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _circleButton(Icons.close, Colors.red, _next),
-          _circleButton(Icons.favorite, Colors.green, () => _open(_users![_currentIndex])),
+          _circleBtn(Icons.close_rounded, Colors.red, _next),
+          _circleBtn(Icons.chat_bubble_rounded, Colors.green, () => _open(_users![_currentIndex])),
         ],
       ),
     );
   }
 
-  Widget _circleButton(IconData icon, Color color, VoidCallback onTap) {
+  Widget _circleBtn(IconData icon, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(15.r),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color.withValues(alpha: 0.1),
-          border: Border.all(color: color, width: 2),
-        ),
-        child: Icon(icon, color: color, size: 30.r),
+        padding: EdgeInsets.all(16.r),
+        decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.1), border: Border.all(color: color, width: 2)),
+        child: Icon(icon, color: color, size: 28.r),
       ),
     );
   }

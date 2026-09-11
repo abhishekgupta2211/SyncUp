@@ -5,10 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/config/app_config.dart';
 import '../../../../core/utils/validators.dart';
-import '../../../../core/widgets/gradient_button.dart';
-import '../../../../core/widgets/gradient_logo.dart';
 import '../../data/providers/auth_provider.dart';
 
 class AuthPage extends StatefulWidget {
@@ -21,30 +18,24 @@ class AuthPage extends StatefulWidget {
 class _AuthPageState extends State<AuthPage> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
-  final _password = TextEditingController();
-  bool _isLogin = true;
-  bool _obscure = true;
 
   @override
   void dispose() {
     _email.dispose();
-    _password.dispose();
     super.dispose();
-  }
-
-  void _toggleMode() {
-    setState(() => _isLogin = !_isLogin);
-    context.read<AuthProvider>().clearError();
   }
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
+    
     final auth = context.read<AuthProvider>();
-    if (_isLogin) {
-      await auth.signIn(_email.text, _password.text);
-    } else {
-      await auth.signUp(_email.text, _password.text);
+    final success = await auth.requestMagicLink(_email.text);
+    
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ignition link sent to your email! 🚀')),
+      );
     }
   }
 
@@ -60,7 +51,7 @@ class _AuthPageState extends State<AuthPage> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
                 child: _glassCard(theme, auth)
                     .animate()
                     .fadeIn(duration: 500.ms)
@@ -79,15 +70,15 @@ class _AuthPageState extends State<AuthPage> {
 
   Widget _glassCard(ThemeData theme, AuthProvider auth) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(28.r),
+      borderRadius: BorderRadius.circular(32.r),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 26.h),
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(28.r),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(32.r),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
           ),
           child: Form(
             key: _formKey,
@@ -95,96 +86,69 @@ class _AuthPageState extends State<AuthPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Center(child: GradientLogo(size: 72)),
-                SizedBox(height: 18.h),
+                Center(
+                  child: Container(
+                    width: 80.r,
+                    height: 80.r,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(24.r),
+                    ),
+                    child: Icon(Icons.motorcycle_rounded, size: 48.r, color: Colors.white),
+                  ),
+                ),
+                SizedBox(height: 24.h),
                 Text(
-                  _isLogin ? 'Welcome back' : 'Create your account',
+                  'Join RevvRide',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
                     color: Colors.white,
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                SizedBox(height: 6.h),
+                SizedBox(height: 8.h),
                 Text(
-                  _isLogin
-                      ? 'Log in to continue to ${AppConfig.appName}'
-                      : 'Sign up to start connecting',
+                  'Enter your email to start your journey. No password needed! 🏁',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.65),
-                    fontSize: 13.sp,
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 14.sp,
                   ),
                 ),
-                SizedBox(height: 26.h),
+                SizedBox(height: 32.h),
                 TextFormField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.email],
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _submit(),
+                  style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
-                    hintText: 'Email',
-                    prefixIcon: Icon(Icons.alternate_email, size: 20),
+                    hintText: 'Email address',
+                    prefixIcon: Icon(Icons.alternate_email_rounded, color: Colors.white70),
                   ),
                   validator: Validators.email,
                 ),
-                SizedBox(height: 14.h),
-                TextFormField(
-                  controller: _password,
-                  obscureText: _obscure,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _submit(),
-                  decoration: InputDecoration(
-                    hintText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline, size: 20),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscure
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        size: 20,
-                      ),
-                      onPressed: () => setState(() => _obscure = !_obscure),
-                    ),
-                  ),
-                  validator: Validators.password,
-                ),
                 if (auth.error != null) ...[
-                  SizedBox(height: 14.h),
+                  SizedBox(height: 16.h),
                   _ErrorBanner(message: auth.error!),
                 ],
-                SizedBox(height: 24.h),
-                GradientButton(
-                  label: _isLogin ? 'Log in' : 'Sign up',
+                SizedBox(height: 32.h),
+                _ActionButton(
+                  label: 'Start Engine',
                   loading: auth.busy,
                   onPressed: auth.busy ? null : _submit,
                 ),
-                SizedBox(height: 18.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _isLogin
-                          ? "Don't have an account? "
-                          : 'Already have an account? ',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.65),
-                        fontSize: 13.sp,
-                      ),
+                SizedBox(height: 16.h),
+                TextButton(
+                  onPressed: auth.busy ? null : () => auth.signInGuest(),
+                  child: Text(
+                    'Explore as Guest',
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14.sp,
                     ),
-                    GestureDetector(
-                      onTap: auth.busy ? null : _toggleMode,
-                      child: Text(
-                        _isLogin ? 'Sign up' : 'Log in',
-                        style: TextStyle(
-                          color: theme.colorScheme.primary,
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -195,42 +159,90 @@ class _AuthPageState extends State<AuthPage> {
   }
 }
 
-/// Animated gradient + floating blobs behind the auth card.
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.label,
+    required this.onPressed,
+    this.loading = false,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      height: 56.h,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16.r),
+        gradient: LinearGradient(
+          colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.8)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          )
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        ),
+        child: loading
+            ? SizedBox(
+                width: 24.r,
+                height: 24.r,
+                child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+              )
+            : Text(
+                label.toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5,
+                ),
+              ),
+      ),
+    );
+  }
+}
+
 class _AuthBackground extends StatelessWidget {
   const _AuthBackground();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF241F52), Color(0xFF15133A), Color(0xFF0B0E24)],
-        ),
-      ),
+      color: const Color(0xFF0C0C0C),
       child: Stack(
         children: [
           Positioned(
-            top: -80.h,
-            left: -70.w,
-            child: _blob(const Color(0xFF6C63FF), 280.r)
+            top: -100.h,
+            left: -100.w,
+            child: _blob(const Color(0xFFFF5722), 400.r)
                 .animate(onPlay: (c) => c.repeat(reverse: true))
                 .moveY(
                     begin: 0,
-                    end: 24.h,
-                    duration: 4000.ms,
+                    end: 30.h,
+                    duration: 5000.ms,
                     curve: Curves.easeInOut),
           ),
           Positioned(
-            bottom: -70.h,
-            right: -60.w,
-            child: _blob(const Color(0xFF3B82F6), 240.r)
+            bottom: -80.h,
+            right: -80.w,
+            child: _blob(const Color(0xFF37474F), 350.r)
                 .animate(onPlay: (c) => c.repeat(reverse: true))
                 .moveY(
                     begin: 0,
-                    end: -22.h,
-                    duration: 4600.ms,
+                    end: -25.h,
+                    duration: 6000.ms,
                     curve: Curves.easeInOut),
           ),
         ],
@@ -245,7 +257,7 @@ class _AuthBackground extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: RadialGradient(colors: [
-              color.withValues(alpha: 0.45),
+              color.withValues(alpha: 0.3),
               color.withValues(alpha: 0.0),
             ]),
           ),
@@ -261,20 +273,21 @@ class _ErrorBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: theme.colorScheme.error.withValues(alpha: 0.16),
+        color: theme.colorScheme.error.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: theme.colorScheme.error, size: 18.r),
-          SizedBox(width: 8.w),
+          Icon(Icons.error_outline_rounded, color: theme.colorScheme.error, size: 20.r),
+          SizedBox(width: 12.w),
           Expanded(
             child: Text(
               message,
               style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.error),
+                  ?.copyWith(color: theme.colorScheme.error, fontWeight: FontWeight.w600),
             ),
           ),
         ],

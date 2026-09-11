@@ -27,16 +27,34 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _picker = ImagePicker();
-  late final TextEditingController _name =
-      TextEditingController(text: widget.profile.displayName);
-  late final TextEditingController _username =
-      TextEditingController(text: widget.profile.username);
-  late final TextEditingController _status =
-      TextEditingController(text: widget.profile.statusLine);
-  late final TextEditingController _bio =
-      TextEditingController(text: widget.profile.bio);
-  late final TextEditingController _interests =
-      TextEditingController(text: widget.profile.interests.join(', '));
+  late final TextEditingController _name;
+  late final TextEditingController _username;
+  late final TextEditingController _status;
+  late final TextEditingController _bio;
+  late final TextEditingController _interests;
+  late final TextEditingController _experience;
+  String _ridingStyle = 'City Rider';
+
+  @override
+  void initState() {
+    super.initState();
+    _name = TextEditingController(text: widget.profile.displayName);
+    _username = TextEditingController(text: widget.profile.username);
+    _status = TextEditingController(text: widget.profile.statusLine);
+    _bio = TextEditingController(text: widget.profile.bio);
+    _interests = TextEditingController(text: widget.profile.interests.join(', '));
+    _experience = TextEditingController(text: widget.profile.experienceYears.toString());
+    _ridingStyle = widget.profile.ridingStyle ?? 'City Rider';
+  }
+
+  final List<String> _styles = [
+    'City Rider',
+    'Tourer',
+    'Adventure Rider',
+    'Sports Rider',
+    'Cruiser',
+    'Off-road Rider',
+  ];
 
   XFile? _picked;
   bool _saving = false;
@@ -135,6 +153,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       themeSongUrl: _selectedSong?.url,
       themeSongCover: _selectedSong?.coverUrl,
       avatarUrl: avatarUrl,
+      ridingStyle: _ridingStyle,
+      experienceYears: int.tryParse(_experience.text) ?? 0,
     );
     if (!mounted) return;
     setState(() => _saving = false);
@@ -263,6 +283,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           TextField(
             controller: _interests,
             decoration: const InputDecoration(hintText: 'Travel, Music, Coding...'),
+          ),
+          SizedBox(height: 18.h),
+          _label('Riding Style'),
+          DropdownButtonFormField<String>(
+            initialValue: _ridingStyle,
+            decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 16)),
+            items: _styles.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+            onChanged: (v) => setState(() => _ridingStyle = v!),
+          ),
+          SizedBox(height: 18.h),
+          _label('Experience (Years)'),
+          TextField(
+            controller: _experience,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(hintText: '0'),
           ),
           SizedBox(height: 18.h),
           _label('Profile Song'),

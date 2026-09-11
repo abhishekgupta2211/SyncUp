@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// Small section header used across the settings screens.
 class SettingsSectionTitle extends StatelessWidget {
   const SettingsSectionTitle(this.text, {super.key});
   final String text;
@@ -22,8 +21,6 @@ class SettingsSectionTitle extends StatelessWidget {
     );
   }
 }
-
-/// A labelled toggle row.
 class SettingsSwitchTile extends StatelessWidget {
   const SettingsSwitchTile({
     super.key,
@@ -66,7 +63,6 @@ class SettingsSwitchTile extends StatelessWidget {
   }
 }
 
-/// A tappable info/navigation row with an optional trailing value.
 class SettingsTile extends StatelessWidget {
   const SettingsTile({
     super.key,

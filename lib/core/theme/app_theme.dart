@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'chat_theme.dart';
 
-/// Builds the LoveChat light & dark [ThemeData] (Material 3, premium typography).
+/// Builds the SyncUp Rider light & dark [ThemeData].
 class AppTheme {
   AppTheme._();
 
@@ -48,10 +48,14 @@ class AppTheme {
       brightness: brightness,
       primary: accent,
       surface: surface,
-    ).copyWith(surfaceContainerHighest: surfaceAlt, outline: border);
+      onSurface: textPrimary,
+    ).copyWith(
+      surfaceContainerHighest: surfaceAlt,
+      outline: border,
+    );
 
     final baseTextTheme = ThemeData(brightness: brightness).textTheme;
-    final textTheme = GoogleFonts.plusJakartaSansTextTheme(baseTextTheme).apply(
+    final textTheme = GoogleFonts.montserratTextTheme(baseTextTheme).apply(
       bodyColor: textPrimary,
       displayColor: textPrimary,
     );
@@ -62,7 +66,7 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: scaffold,
       textTheme: textTheme,
-      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
+      fontFamily: GoogleFonts.montserrat().fontFamily,
       splashFactory: InkSparkle.splashFactory,
       appBarTheme: AppBarTheme(
         backgroundColor: scaffold,
@@ -70,28 +74,29 @@ class AppTheme {
         elevation: 0,
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.2,
           color: textPrimary,
         ),
         iconTheme: IconThemeData(color: textPrimary),
       ),
-      dividerTheme: DividerThemeData(color: border, thickness: 0.6, space: 0.6),
+      dividerTheme: DividerThemeData(color: border, thickness: 1.0, space: 1),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surfaceAlt,
         hintStyle: textTheme.bodyMedium?.copyWith(color: textSecondary),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: accent, width: 1.4),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: accent, width: 1.5),
         ),
       ),
       extensions: <ThemeExtension<dynamic>>[chat],

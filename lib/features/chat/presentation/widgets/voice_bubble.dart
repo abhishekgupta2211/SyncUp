@@ -26,6 +26,8 @@ class _VoiceMessageContentState extends State<VoiceMessageContent> {
   final _player = AudioPlayer();
   bool _ready = false;
   bool _loading = false;
+  double _speed = 1.0;
+  double _pitch = 1.0; // NEW
   Duration _position = Duration.zero;
   late Duration _total;
 
@@ -74,6 +76,32 @@ class _VoiceMessageContentState extends State<VoiceMessageContent> {
     } else {
       await _player.play();
     }
+  }
+
+  void _changeSpeed() {
+    setState(() {
+      if (_speed == 1.0) {
+        _speed = 1.5;
+      } else if (_speed == 1.5) {
+        _speed = 2.0;
+      } else {
+        _speed = 1.0;
+      }
+    });
+    _player.setSpeed(_speed);
+  }
+
+  void _changePitch() {
+    setState(() {
+      if (_pitch == 1.0) {
+        _pitch = 1.4;
+      } else if (_pitch == 1.4) {
+        _pitch = 0.7;
+      } else {
+        _pitch = 1.0;
+      }
+    });
+    _player.setPitch(_pitch);
   }
 
   @override
@@ -150,6 +178,37 @@ class _VoiceMessageContentState extends State<VoiceMessageContent> {
                         color: widget.mine
                             ? chat.outgoingText.withValues(alpha: 0.85)
                             : chat.timestamp,
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: _changePitch,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: tint.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Icon(Icons.face_retouching_natural, size: 14.r, color: tint),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    GestureDetector(
+                      onTap: _changeSpeed,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: tint.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Text(
+                          '${_speed}x',
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.bold,
+                            color: tint,
+                          ),
+                        ),
                       ),
                     ),
                   ],

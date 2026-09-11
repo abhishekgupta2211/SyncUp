@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:zego_uikit/zego_uikit.dart';
@@ -102,17 +101,18 @@ class _ChatThreadView extends StatefulWidget {
 
 class _ChatThreadViewState extends State<_ChatThreadView> {
   final _scroll = ScrollController();
+  final _searchController = TextEditingController();
   String? _lastId;
   String? _firstId;
   DateTime? _peerLastSeen;
+  bool _isSearching = false;
 
   @override
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final ls =
-          await context.read<PresenceProvider>().fetchLastSeen(widget.peerId);
+      final ls = await context.read<PresenceProvider>().fetchLastSeen(widget.peerId);
       if (mounted) setState(() => _peerLastSeen = ls);
     });
   }
@@ -134,6 +134,7 @@ class _ChatThreadViewState extends State<_ChatThreadView> {
   @override
   void dispose() {
     _scroll.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -167,7 +168,7 @@ class _ChatThreadViewState extends State<_ChatThreadView> {
     if (confirmed != true) return;
     try {
       await ContactsRepository(SupabaseService.client).blockUser(widget.peerId);
-      if (mounted) Navigator.of(context).pop(); // leave the now-blocked chat
+      if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -181,8 +182,6 @@ class _ChatThreadViewState extends State<_ChatThreadView> {
     return ZegoSendCallInvitationButton(
       isVideoCall: isVideo,
       onPressed: (code, message, errorInvitees) {
-        // Record the placed call so it shows in the Calls tab (RLS lets the
-        // peer see it too, as an incoming call).
         if (errorInvitees.isEmpty) {
           CallLogRepository(SupabaseService.client)
               .logOutgoing(peerId: widget.peerId, isVideo: isVideo)
@@ -216,17 +215,13 @@ class _ChatThreadViewState extends State<_ChatThreadView> {
     final myId = SupabaseService.currentUserId!;
     final (statusText, statusColor) = _peerStatus(c, presence, theme);
 
-    // Only auto-scroll to the bottom on first load or a real append while the
-    // user is near the bottom — never on a prepend (loadMore older history).
     final msgs = c.messages;
     final newLast = msgs.isEmpty ? null : msgs.last.messageId;
     final newFirst = msgs.isEmpty ? null : msgs.first.messageId;
     if (newLast != _lastId || newFirst != _firstId) {
       final firstLoad = _lastId == null && newLast != null;
-      final appended =
-          _lastId != null && newLast != _lastId && newFirst == _firstId;
-      final nearBottom = !_scroll.hasClients ||
-          (_scroll.position.maxScrollExtent - _scroll.position.pixels) < 150;
+      final appended = _lastId != null && newLast != _lastId && newFirst == _firstId;
+      final nearBottom = !_scroll.hasClients || (_scroll.position.maxScrollExtent - _scroll.position.pixels) < 150;
       _lastId = newLast;
       _firstId = newFirst;
       if (firstLoad || (appended && nearBottom)) _jumpToBottom();
@@ -235,85 +230,66 @@ class _ChatThreadViewState extends State<_ChatThreadView> {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
-        title: Row(
-          children: [
-            AppAvatar(
-              name: widget.peerName,
-              avatarUrl: widget.peerAvatarUrl,
-              radius: 18.r,
-            ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.peerName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                  Row(
+        title: _isSearching 
+          ? TextField(
+              controller: _searchController,
+              autofocus: true,
+              style: theme.textTheme.bodyLarge,
+              decoration: const InputDecoration(hintText: 'Search message...', border: InputBorder.none),
+              onChanged: (_) => setState(() {}),
+            )
+          : Row(
+              children: [
+                AppAvatar(
+                  name: widget.peerName,
+                  avatarUrl: widget.peerAvatarUrl,
+                  radius: 18.r,
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        statusText,
+                        widget.peerName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: statusColor,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                       ),
-                      if (msgs.length > 20) ...[
-                        SizedBox(width: 8.w),
-                        Icon(Icons.local_fire_department, size: 14.r, color: Colors.orange),
-                        Text(' 5', style: TextStyle(fontSize: 10.sp, color: Colors.orange, fontWeight: FontWeight.bold)),
-                        SizedBox(width: 12.w),
-                        _buildVibeIndicator(msgs),
-                      ],
-                    ],
-                  ),
-                  if (msgs.length > 5)
-                    Padding(
-                      padding: EdgeInsets.only(top: 2.h),
-                      child: Row(
+                      Row(
                         children: [
-                          Icon(Icons.favorite, size: 10.r, color: Colors.pinkAccent),
-                          SizedBox(width: 4.w),
-                          Container(
-                            width: 60.w,
-                            height: 4.h,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                            child: FractionallySizedBox(
-                              alignment: Alignment.centerLeft,
-                              widthFactor: (msgs.length / 100).clamp(0.1, 1.0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.pinkAccent,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 4.w),
                           Text(
-                            '${(msgs.length / 1).clamp(10, 99).toInt()}%',
-                            style: TextStyle(fontSize: 8.sp, color: Colors.pinkAccent, fontWeight: FontWeight.bold),
+                            statusText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: statusColor,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
+                          if (msgs.length > 20) ...[
+                            SizedBox(width: 8.w),
+                            Icon(Icons.local_fire_department, size: 14.r, color: Colors.orange),
+                            Text(' 5', style: TextStyle(fontSize: 10.sp, color: Colors.orange, fontWeight: FontWeight.bold)),
+                            SizedBox(width: 12.w),
+                            _buildVibeIndicator(msgs),
+                          ],
                         ],
                       ),
-                    ),
-                ],
-              ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
         actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: () => setState(() {
+              _isSearching = !_isSearching;
+              if (!_isSearching) _searchController.clear();
+            }),
+          ),
           if (CallService.enabled) ...[
             _callButton(isVideo: false),
             _callButton(isVideo: true),
@@ -372,44 +348,26 @@ class _ChatThreadViewState extends State<_ChatThreadView> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                child: WallpaperBackground(
-                  child: _buildBody(context, c, myId),
-                ),
-              ),
-              ChatInputBar(
-                onSend: c.sendText,
-                onTyping: c.setTyping,
-                onPickImage: (file, {isSnap = false}) => c.sendImage(file, isSnap: isSnap),
-                onSendVoice: c.sendVoice,
-                replyToText: c.replyTo == null
-                    ? null
-                    : (c.replyTo!.deletedForEveryone
-                        ? 'Deleted message'
-                        : c.replyTo!.message),
-                onCancelReply: c.clearReply,
-              ),
-              if (c.messages.isNotEmpty && !c.messages.last.isMine(myId) && !c.messages.last.isSnap)
-                _buildSmartReplies(context, c),
-              SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 0 : 10.h),
-            ],
-          ),
-          if (msgs.length > 10)
-            ...List.generate(3, (index) => Positioned(
-              bottom: 100.h + (index * 50.h),
-              right: 20.w + (index * 40.w),
-              child: Icon(Icons.favorite, color: Colors.pink.withValues(alpha: 0.3), size: 24.r)
-                  .animate(onPlay: (controller) => controller.repeat())
-                  .moveY(begin: 0, end: -400.h, duration: (3 + index).seconds, curve: Curves.easeInOut)
-                  .fade(begin: 0, end: 0.6)
-                  .then()
-                  .fade(begin: 0.6, end: 0),
-            )),
-        ],
+      body: WallpaperBackground(
+        child: Column(
+          children: [
+            Expanded(child: _buildBody(context, c, myId)),
+            if (msgs.isNotEmpty && !msgs.last.isMine(myId) && !msgs.last.isSnap)
+              _buildSmartReplies(context, c),
+            ChatInputBar(
+              onSend: c.sendText,
+              onTyping: c.setTyping,
+              onPickImage: (file, {isSnap = false}) => c.sendImage(file, isSnap: isSnap),
+              onSendVoice: c.sendVoice,
+              replyToText: c.replyTo == null
+                  ? null
+                  : (c.replyTo!.deletedForEveryone
+                      ? 'Deleted message'
+                      : c.replyTo!.message),
+              onCancelReply: c.clearReply,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -447,10 +405,8 @@ class _ChatThreadViewState extends State<_ChatThreadView> {
   }
 
   Widget _buildVibeIndicator(List<Message> msgs) {
-    // Advanced AI Mock: Analyze last 10 messages for sentiment
     String vibeEmoji = "😊";
     String vibeText = "Sweet";
-    
     final lastMsgs = msgs.take(10).map((m) => m.message.toLowerCase()).join(" ");
     if (lastMsgs.contains("love") || lastMsgs.contains("❤️")) {
       vibeEmoji = "💖"; vibeText = "Romantic";
@@ -493,9 +449,7 @@ class _ChatThreadViewState extends State<_ChatThreadView> {
   Widget _buildBody(BuildContext context, ChatController c, String myId) {
     final theme = Theme.of(context);
     if (c.loading) {
-      return Center(
-        child: CircularProgressIndicator(color: theme.colorScheme.primary),
-      );
+      return Center(child: CircularProgressIndicator(color: theme.colorScheme.primary));
     }
     if (c.messages.isEmpty) {
       return Center(
@@ -504,11 +458,8 @@ class _ChatThreadViewState extends State<_ChatThreadView> {
           children: [
             Text('👋', style: TextStyle(fontSize: 44.sp)),
             SizedBox(height: 10.h),
-            Text(
-              'Say hi to ${widget.peerName}',
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
+            Text('Say hi to ${widget.peerName}',
+              style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
             ),
           ],
         ),
@@ -516,30 +467,25 @@ class _ChatThreadViewState extends State<_ChatThreadView> {
     }
 
     final items = _buildItems(c.messages);
+    final filteredItems = _isSearching && _searchController.text.isNotEmpty
+        ? items.where((item) => item is _MsgItem && item.message.message.toLowerCase().contains(_searchController.text.toLowerCase())).toList()
+        : items;
+
     return ListView.builder(
       controller: _scroll,
       padding: EdgeInsets.symmetric(vertical: 8.h),
-      itemCount: items.length +
-          (c.loadingMore ? 1 : 0) +
-          (c.peerTyping ? 1 : 0),
+      itemCount: filteredItems.length + (c.loadingMore ? 1 : 0) + (c.peerTyping ? 1 : 0),
       itemBuilder: (context, index) {
         if (c.loadingMore && index == 0) {
           return Padding(
             padding: EdgeInsets.all(8.h),
-            child: Center(
-              child: SizedBox(
-                width: 18.r,
-                height: 18.r,
-                child: const CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
+            child: Center(child: SizedBox(width: 18.r, height: 18.r, child: const CircularProgressIndicator(strokeWidth: 2))),
           );
         }
-        if (c.peerTyping &&
-            index == items.length + (c.loadingMore ? 1 : 0)) {
+        if (c.peerTyping && index == filteredItems.length + (c.loadingMore ? 1 : 0)) {
           return const TypingIndicator();
         }
-        final item = items[index - (c.loadingMore ? 1 : 0)];
+        final item = filteredItems[index - (c.loadingMore ? 1 : 0)];
         if (item is _DateItem) return ChatDateChip(label: item.label);
         final msg = (item as _MsgItem).message;
         Message? replied;
@@ -555,12 +501,7 @@ class _ChatThreadViewState extends State<_ChatThreadView> {
           reactions: c.reactionsFor(msg.messageId),
           onRetry: () => c.retry(msg),
           onSwipeReply: () => c.setReply(msg),
-          onLongPress: () => showMessageActions(
-            context,
-            message: msg,
-            controller: c,
-            myId: myId,
-          ),
+          onLongPress: () => showMessageActions(context, message: msg, controller: c, myId: myId),
         );
       },
     );

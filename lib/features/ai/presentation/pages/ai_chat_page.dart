@@ -36,10 +36,10 @@ class _AIChatPageState extends State<AIChatPage> {
 
   Future<void> _pickImage() async {
     final file = await _picker.pickImage(source: ImageSource.gallery);
-    if (file != null) {
-      context.read<AIProvider>().sendImage(file);
-      _scrollToBottom();
-    }
+    if (file == null) return;
+    if (!mounted) return;
+    context.read<AIProvider>().sendImage(file);
+    _scrollToBottom();
   }
 
   void _scrollToBottom() {
@@ -54,7 +54,6 @@ class _AIChatPageState extends State<AIChatPage> {
   Widget build(BuildContext context) {
     final ai = context.watch<AIProvider>();
     final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(

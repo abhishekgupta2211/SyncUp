@@ -62,7 +62,7 @@ class ConversationListProvider extends ChangeNotifier {
       final parts = await _client
           .from(Tables.participants)
           .select(
-              'conversation_id, unread_count, is_archived, conversations(id, last_message_text, last_message_type, last_message_at)')
+              'conversation_id, unread_count, is_archived, conversations(id, last_message_text, last_message_type, last_message_at, created_at)')
           .eq('user_id', me);
 
       final partList = (parts as List).cast<Map<String, dynamic>>();
@@ -107,17 +107,18 @@ class ConversationListProvider extends ChangeNotifier {
         final peer = peerByConv[p['conversation_id']];
         if (conv == null || peer == null) continue;
         if (blocked.contains(peer['id'])) continue;
-        final lastAt = conv['last_message_at'];
-        if (lastAt == null) continue; // hide empty conversations until first msg
+        
+        final lastAt = conv['last_message_at'] ?? conv['created_at'];
+        
         list.add(Conversation(
           id: conv['id'] as String,
           peerId: peer['id'] as String,
           peerName: (peer['display_name'] ?? '') as String,
           peerUsername: (peer['username'] ?? '') as String,
           peerAvatarUrl: peer['avatar_url'] as String?,
-          lastMessageText: (conv['last_message_text'] ?? '') as String,
+          lastMessageText: conv['last_message_text'] ?? 'New friend! 👋',
           lastMessageType: conv['last_message_type'] as String?,
-          lastMessageAt: DateTime.parse(lastAt.toString()).toLocal(),
+          lastMessageAt: lastAt == null ? null : DateTime.parse(lastAt.toString()).toLocal(),
           unreadCount: (p['unread_count'] ?? 0) as int,
           isArchived: (p['is_archived'] ?? false) as bool,
         ));

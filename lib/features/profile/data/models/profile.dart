@@ -13,12 +13,24 @@ class Profile {
   final bool isVip;
   final String? moodEmoji;
   final String? moodText;
-  final int social_level;
-  final int xp_points;
-  final String? theme_song_name;
-  final String? theme_song_artist;
-  final String? theme_song_url;
-  final String? theme_song_cover;
+  final int socialLevel;
+  final int xpPoints;
+  final String? themeSongName;
+  final String? themeSongArtist;
+  final String? themeSongUrl;
+  final String? themeSongCover;
+  
+  // Rider specific extensions
+  final String? ridingStyle;
+  final int experienceYears;
+  final double totalDistanceKm;
+  final int totalRides;
+  
+  final String? bloodGroup;
+  final String? allergies;
+  final String? emergencyContactName;
+  final String? emergencyContactPhone;
+  
   final DateTime? lastSeen;
   final bool isOnline;
 
@@ -29,19 +41,27 @@ class Profile {
     this.phone,
     this.email,
     this.avatarUrl,
-    this.statusLine = 'Hey there! I am using LoveChat 💗',
+    this.statusLine = 'Ready to ride! 🏍️',
     this.bio,
     this.interests = const [],
     this.isVerified = false,
     this.isVip = false,
     this.moodEmoji,
     this.moodText,
-    this.social_level = 1,
-    this.xp_points = 0,
-    this.theme_song_name,
-    this.theme_song_artist,
-    this.theme_song_url,
-    this.theme_song_cover,
+    this.socialLevel = 1,
+    this.xpPoints = 0,
+    this.themeSongName,
+    this.themeSongArtist,
+    this.themeSongUrl,
+    this.themeSongCover,
+    this.ridingStyle,
+    this.experienceYears = 0,
+    this.totalDistanceKm = 0.0,
+    this.totalRides = 0,
+    this.bloodGroup,
+    this.allergies,
+    this.emergencyContactName,
+    this.emergencyContactPhone,
     this.lastSeen,
     this.isOnline = false,
   });
@@ -54,20 +74,27 @@ class Profile {
       phone: map['phone'] as String?,
       email: map['email'] as String?,
       avatarUrl: map['avatar_url'] as String?,
-      statusLine: (map['status_line'] ?? 'Hey there! I am using LoveChat 💗')
-          as String,
+      statusLine: (map['status_line'] ?? 'Ready to ride! 🏍️') as String,
       bio: map['bio'] as String?,
       interests: List<String>.from(map['interests'] ?? []),
       isVerified: (map['is_verified'] ?? false) as bool,
       isVip: (map['is_vip'] ?? false) as bool,
       moodEmoji: map['mood_emoji'] as String?,
       moodText: map['mood_text'] as String?,
-      social_level: (map['social_level'] as num?)?.toInt() ?? 1,
-      xp_points: (map['xp_points'] as num?)?.toInt() ?? 0,
-      theme_song_name: map['theme_song_name'] as String?,
-      theme_song_artist: map['theme_song_artist'] as String?,
-      theme_song_url: map['theme_song_url'] as String?,
-      theme_song_cover: map['theme_song_cover'] as String?,
+      socialLevel: (map['social_level'] as num?)?.toInt() ?? 1,
+      xpPoints: (map['xp_points'] as num?)?.toInt() ?? 0,
+      themeSongName: map['theme_song_name'] as String?,
+      themeSongArtist: map['theme_song_artist'] as String?,
+      themeSongUrl: map['theme_song_url'] as String?,
+      themeSongCover: map['theme_song_cover'] as String?,
+      ridingStyle: map['riding_style'] as String?,
+      experienceYears: (map['experience_years'] as num?)?.toInt() ?? 0,
+      totalDistanceKm: (map['total_distance_km'] as num?)?.toDouble() ?? 0.0,
+      totalRides: (map['total_rides'] as num?)?.toInt() ?? 0,
+      bloodGroup: map['blood_group'] as String?,
+      allergies: map['allergies'] as String?,
+      emergencyContactName: map['emergency_contact_name'] as String?,
+      emergencyContactPhone: map['emergency_contact_phone'] as String?,
       lastSeen: map['last_seen'] == null
           ? null
           : DateTime.tryParse(map['last_seen'].toString()),
@@ -89,12 +116,20 @@ class Profile {
         'is_vip': isVip,
         'mood_emoji': moodEmoji,
         'mood_text': moodText,
-        'social_level': social_level,
-        'xp_points': xp_points,
-        'theme_song_name': theme_song_name,
-        'theme_song_artist': theme_song_artist,
-        'theme_song_url': theme_song_url,
-        'theme_song_cover': theme_song_cover,
+        'social_level': socialLevel,
+        'xp_points': xpPoints,
+        'theme_song_name': themeSongName,
+        'theme_song_artist': themeSongArtist,
+        'theme_song_url': themeSongUrl,
+        'theme_song_cover': themeSongCover,
+        'riding_style': ridingStyle,
+        'experience_years': experienceYears,
+        'total_distance_km': totalDistanceKm,
+        'total_rides': totalRides,
+        'blood_group': bloodGroup,
+        'allergies': allergies,
+        'emergency_contact_name': emergencyContactName,
+        'emergency_contact_phone': emergencyContactPhone,
       };
 
   bool get isPlaceholder =>
@@ -114,12 +149,20 @@ class Profile {
     bool? isVip,
     String? moodEmoji,
     String? moodText,
-    int? social_level,
-    int? xp_points,
-    String? theme_song_name,
-    String? theme_song_artist,
-    String? theme_song_url,
-    String? theme_song_cover,
+    int? socialLevel,
+    int? xpPoints,
+    String? themeSongName,
+    String? themeSongArtist,
+    String? themeSongUrl,
+    String? themeSongCover,
+    String? ridingStyle,
+    int? experienceYears,
+    double? totalDistanceKm,
+    int? totalRides,
+    String? bloodGroup,
+    String? allergies,
+    String? emergencyContactName,
+    String? emergencyContactPhone,
     DateTime? lastSeen,
     bool? isOnline,
   }) {
@@ -137,12 +180,20 @@ class Profile {
       isVip: isVip ?? this.isVip,
       moodEmoji: moodEmoji ?? this.moodEmoji,
       moodText: moodText ?? this.moodText,
-      social_level: social_level ?? this.social_level,
-      xp_points: xp_points ?? this.xp_points,
-      theme_song_name: theme_song_name ?? this.theme_song_name,
-      theme_song_artist: theme_song_artist ?? this.theme_song_artist,
-      theme_song_url: theme_song_url ?? this.theme_song_url,
-      theme_song_cover: theme_song_cover ?? this.theme_song_cover,
+      socialLevel: socialLevel ?? this.socialLevel,
+      xpPoints: xpPoints ?? this.xpPoints,
+      themeSongName: themeSongName ?? this.themeSongName,
+      themeSongArtist: themeSongArtist ?? this.themeSongArtist,
+      themeSongUrl: themeSongUrl ?? this.themeSongUrl,
+      themeSongCover: themeSongCover ?? this.themeSongCover,
+      ridingStyle: ridingStyle ?? this.ridingStyle,
+      experienceYears: experienceYears ?? this.experienceYears,
+      totalDistanceKm: totalDistanceKm ?? this.totalDistanceKm,
+      totalRides: totalRides ?? this.totalRides,
+      bloodGroup: bloodGroup ?? this.bloodGroup,
+      allergies: allergies ?? this.allergies,
+      emergencyContactName: emergencyContactName ?? this.emergencyContactName,
+      emergencyContactPhone: emergencyContactPhone ?? this.emergencyContactPhone,
       lastSeen: lastSeen ?? this.lastSeen,
       isOnline: isOnline ?? this.isOnline,
     );

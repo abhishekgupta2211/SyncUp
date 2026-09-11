@@ -9,63 +9,89 @@ class SplashPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: const Color(0xFF0C0C0C),
       body: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          gradient: RadialGradient(
+            center: Alignment.center,
+            radius: 1.2,
             colors: [
-              theme.colorScheme.surface,
-              theme.colorScheme.primary.withValues(alpha: 0.05),
-              theme.colorScheme.surface,
+              theme.colorScheme.primary.withValues(alpha: 0.15),
+              const Color(0xFF0C0C0C),
             ],
           ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // --- Modern Tech Logo ---
-            _SyncUpLogo()
-                .animate()
-                .fadeIn(duration: 800.ms)
-                .scale(begin: const Offset(0.8, 0.8), curve: Curves.elasticOut, duration: 1200.ms)
-                .shimmer(delay: 1500.ms, duration: 2.seconds),
+            // --- Premium Rider Icon Animation ---
+            _RiderLogo()
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .shimmer(duration: 2.seconds, color: Colors.white24)
+                .scale(begin: const Offset(1, 1), end: const Offset(1.05, 1.05), duration: 2.seconds, curve: Curves.easeInOut),
             
-            SizedBox(height: 32.h),
+            SizedBox(height: 48.h),
             
-            // --- App Name with Spacing ---
+            // --- App Name: REVV RIDE ---
             Text(
-              'SYNCUP',
-              style: theme.textTheme.headlineMedium?.copyWith(
+              'REVV RIDE',
+              style: theme.textTheme.displaySmall?.copyWith(
                 fontWeight: FontWeight.w900,
-                letterSpacing: 8,
-                color: theme.colorScheme.primary,
+                letterSpacing: 6,
+                color: Colors.white,
               ),
-            ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2, end: 0),
+            ).animate().fadeIn(duration: 800.ms).slideY(begin: 0.3, end: 0, curve: Curves.easeOutBack),
             
-            SizedBox(height: 8.h),
+            SizedBox(height: 12.h),
             
+            // --- Slogan: Born to Ride. Built to Connect. ---
             Text(
-              'THE AI SOCIAL HUB',
-              style: theme.textTheme.labelSmall?.copyWith(
-                letterSpacing: 2,
+              'Born to Ride. Built to Connect.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelLarge?.copyWith(
+                letterSpacing: 1.5,
                 fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-            ).animate().fadeIn(delay: 800.ms),
-            
-            SizedBox(height: 100.h),
-            
-            // --- Loading Indicator ---
-            SizedBox(
-              width: 40.w,
-              child: LinearProgressIndicator(
-                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                 color: theme.colorScheme.primary,
+              ),
+            )
+            .animate(delay: 500.ms)
+            .fadeIn(duration: 1.seconds)
+            .blur(begin: const Offset(5, 5), end: Offset.zero, duration: 800.ms),
+            
+            SizedBox(height: 120.h),
+            
+            // --- Technical Progress Bar ---
+            Container(
+              width: 200.w,
+              height: 2.h,
+              decoration: BoxDecoration(
+                color: Colors.white10,
                 borderRadius: BorderRadius.circular(10),
               ),
-            ).animate().fadeIn(delay: 1.seconds),
+              child: Stack(
+                children: [
+                  TweenAnimationBuilder<double>(
+                    duration: const Duration(seconds: 2),
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    builder: (context, value, child) {
+                      return FractionallySizedBox(
+                        widthFactor: value,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.5), blurRadius: 8, spreadRadius: 1),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -73,34 +99,44 @@ class SplashPage extends StatelessWidget {
   }
 }
 
-class _SyncUpLogo extends StatelessWidget {
+class _RiderLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      width: 100.r,
-      height: 100.r,
+      width: 140.r,
+      height: 140.r,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [theme.colorScheme.primary, theme.colorScheme.tertiary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28.r),
+        color: theme.colorScheme.primary,
+        borderRadius: BorderRadius.circular(40.r),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: theme.colorScheme.primary.withValues(alpha: 0.4),
+            blurRadius: 30,
+            offset: const Offset(0, 15),
           )
         ],
       ),
-      child: Center(
-        child: Icon(
-          Icons.sync_rounded,
-          size: 60.r,
-          color: Colors.white,
-        ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(
+            Icons.motorcycle_rounded,
+            size: 84.r,
+            color: Colors.white,
+          ),
+          Positioned(
+            bottom: 20.r,
+            child: Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: Colors.white38,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

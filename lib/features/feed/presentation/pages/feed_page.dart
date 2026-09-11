@@ -41,9 +41,9 @@ class _FeedPageState extends State<FeedPage> {
             child: Row(
               children: [
                 Text(
-                  'Feed',
+                  'Community',
                   style: theme.textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w800),
+                      ?.copyWith(fontWeight: FontWeight.w900, letterSpacing: 1.1),
                 ),
                 const Spacer(),
                 IconButton(
@@ -122,9 +122,9 @@ class _FeedPageState extends State<FeedPage> {
             child: const Icon(Icons.campaign, color: Colors.white, size: 18),
           ),
           Expanded(
-            child: const Text(
+            child: Text(
               "Global Shoutout: user_abhishek just joined the Top 10 Leaderboard! 🔥",
-              style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 3.seconds),

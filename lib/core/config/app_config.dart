@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 class AppConfig {
   AppConfig._();
 
-  static const String appName = 'SyncUp';
-  static const String tagline = 'Connect • Chat • Share';
+  static const String appName = 'RevvRide';
+  static const String tagline = 'Born to Ride. Built to Connect.';
 
   /// flutter_screenutil design canvas (iPhone-13 logical size).
   static const Size designSize = Size(375, 812);

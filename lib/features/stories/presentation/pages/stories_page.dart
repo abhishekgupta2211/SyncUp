@@ -1,255 +1,217 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import 'package:geocoding/geocoding.dart';
+import '../../../../core/supabase/supabase_service.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/chat_time.dart';
-import '../../../../core/widgets/app_avatar.dart';
-import '../../../../core/widgets/empty_state.dart';
-import '../../data/models/story.dart';
-import '../../data/providers/story_provider.dart';
-import 'story_viewer_screen.dart';
+import '../../../../core/utils/location_service.dart';
+import 'route_details_page.dart';
 
-class StoriesPage extends StatelessWidget {
+class StoriesPage extends StatefulWidget {
   const StoriesPage({super.key});
 
-  Future<void> _showAddSheet(BuildContext context) async {
-    final provider = context.read<StoryProvider>();
-    final picker = ImagePicker();
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Camera'),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Gallery (one or many)'),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (source == null) return;
+  @override
+  State<StoriesPage> createState() => _StoriesPageState();
+}
+
+class _StoriesPageState extends State<StoriesPage> {
+  // ignore: unused_field
+  GoogleMapController? _mapController;
+  final Set<Marker> _markers = {};
+  LatLng? _myLocation;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMapData();
+  }
+
+  Future<void> _loadMapData() async {
+    final pos = await LocationService.getCurrentLocation();
+    if (pos != null) {
+      _myLocation = LatLng(pos.latitude, pos.longitude);
+    }
+    
+    await _fetchNearbyRiders();
+    
+    if (mounted) setState(() => _loading = false);
+  }
+
+  Future<void> _fetchNearbyRiders() async {
     try {
-      if (source == ImageSource.camera) {
-        final file =
-            await picker.pickImage(source: ImageSource.camera, imageQuality: 90);
-        if (file != null) await provider.postStories([file]);
-      } else {
-        final files = await picker.pickMultiImage(imageQuality: 90);
-        if (files.isNotEmpty) await provider.postStories(files);
+      final riders = await SupabaseService.client
+          .from('profiles')
+          .select('id, username, display_name, riding_style')
+          .not('id', 'eq', SupabaseService.currentUserId);
+
+      for (var r in riders) {
+        if (_myLocation != null) {
+          final lat = _myLocation!.latitude + (0.005 * (riders.indexOf(r) % 5));
+          final lng = _myLocation!.longitude + (0.005 * (riders.indexOf(r) % 3));
+          
+          _markers.add(Marker(
+            markerId: MarkerId(r['id']),
+            position: LatLng(lat, lng),
+            infoWindow: InfoWindow(
+              title: r['display_name'], 
+              snippet: r['riding_style'] ?? 'Rider',
+            ),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+          ));
+        }
       }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Pick failed: $e')),
+    } catch (_) {}
+  }
+
+  final _searchController = TextEditingController();
+
+  Future<void> _searchPlace(String query) async {
+    if (query.isEmpty) return;
+    try {
+      final locations = await locationFromAddress(query);
+      if (locations.isNotEmpty && mounted) {
+        final loc = locations.first;
+        _mapController?.animateCamera(
+          CameraUpdate.newLatLngZoom(LatLng(loc.latitude, loc.longitude), 14),
         );
       }
-      return;
-    }
-    if (context.mounted && provider.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Story failed: ${provider.error}'),
-          duration: const Duration(seconds: 10),
-        ),
-      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location not found.')));
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final provider = context.watch<StoryProvider>();
-    final mine = provider.myStories;
-    final friends = provider.friendStories;
 
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
+    return Scaffold(
+      body: Stack(
         children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 4.h),
-            child: Row(
-              children: [
-                Text('Stories',
-                    style: theme.textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.w800)),
-                const Spacer(),
-                if (provider.posting)
-                  SizedBox(
-                    width: 18.r,
-                    height: 18.r,
-                    child: const CircularProgressIndicator(strokeWidth: 2),
+          GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: _myLocation ?? const LatLng(19.076, 72.877),
+              zoom: 14,
+            ),
+            markers: _markers,
+            myLocationEnabled: true,
+            onMapCreated: (c) => _mapController = c,
+            style: theme.brightness == Brightness.dark ? _darkMapStyle : null,
+          ),
+          
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.all(16.r),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(30.r),
+                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10)],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onSubmitted: _searchPlace,
+                  decoration: const InputDecoration(
+                    hintText: 'Search the map...',
+                    border: InputBorder.none,
+                    prefixIcon: Icon(Icons.search),
                   ),
-              ],
+                ),
+              ),
             ),
           ),
-          // My story
-          ListTile(
-            contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 4.h),
-            leading: _Ring(
-              active: mine != null,
-              child: mine != null
-                  ? AppAvatar(name: mine.name, avatarUrl: mine.avatarUrl, radius: 26.r)
-                  : Stack(
-                      children: [
-                        Container(
-                          width: 52.r,
-                          height: 52.r,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainerHighest,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.person,
-                              size: 28.r,
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.5)),
-                        ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            padding: EdgeInsets.all(2.r),
-                            decoration: BoxDecoration(
-                              gradient: AppColors.gradientFrom(
-                                  Theme.of(context).colorScheme.primary),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                  color: theme.scaffoldBackgroundColor, width: 2),
-                            ),
-                            child: Icon(Icons.add, size: 14.r, color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-            title: const Text('Your story',
-                style: TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: Text(mine != null
-                ? '${mine.stories.length} update${mine.stories.length > 1 ? 's' : ''} · tap to view'
-                : 'Tap to add to your story'),
-            trailing: IconButton(
-              icon: Icon(Icons.add_a_photo_outlined,
-                  color: theme.colorScheme.primary),
-              onPressed: () => _showAddSheet(context),
-            ),
-            onTap: () => mine != null
-                ? openStoryViewer(context, mine, isMine: true)
-                : _showAddSheet(context),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 4.h),
-            child: Text('Recent updates',
-                style: theme.textTheme.labelLarge?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w700)),
-          ),
-          Expanded(child: _buildFriends(context, provider, friends)),
+
+          _ExploreDiscoverySheet(),
         ],
       ),
     );
   }
 
-  Widget _buildFriends(
-      BuildContext context, StoryProvider provider, List<UserStories> friends) {
+  static const String _darkMapStyle = '[{"elementType":"geometry","stylers":[{"color":"#212121"}]},{"featureType":"road","elementType":"geometry","stylers":[{"color":"#303030"}]}]';
+}
+
+class _ExploreDiscoverySheet extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    if (provider.loading) {
-      return Center(
-          child: CircularProgressIndicator(color: theme.colorScheme.primary));
-    }
-    if (provider.error != null) {
-      return Center(
-        child: Padding(
-          padding: EdgeInsets.all(24.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.error_outline,
-                  color: theme.colorScheme.error, size: 40.r),
-              SizedBox(height: 12.h),
-              Text('Couldn\'t load stories',
-                  style: theme.textTheme.titleMedium),
-              SizedBox(height: 6.h),
-              Text(provider.error!,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface
-                          .withValues(alpha: 0.6))),
-              SizedBox(height: 16.h),
-              FilledButton.tonal(
-                onPressed: provider.load,
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.3,
+      minChildSize: 0.15,
+      maxChildSize: 0.8,
+      builder: (ctx, scroll) => Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
         ),
-      );
-    }
-    if (friends.isEmpty) {
-      return const EmptyState(
-        icon: Icons.auto_awesome_outlined,
-        title: 'No recent updates',
-        subtitle: 'When your chats post a story, it shows up here.',
-      );
-    }
-    return RefreshIndicator(
-      onRefresh: provider.load,
-      child: ListView.builder(
-        itemCount: friends.length,
-        itemBuilder: (context, i) {
-          final g = friends[i];
-          final unseen = provider.hasUnseen(g);
-          return ListTile(
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 20.w, vertical: 4.h),
-            leading: _Ring(
-              active: unseen,
-              child: AppAvatar(name: g.name, avatarUrl: g.avatarUrl, radius: 26.r),
-            ),
-            title:
-                Text(g.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: Text(ChatTime.listLabel(g.latestAt)),
-            onTap: () => openStoryViewer(context, g, isMine: false),
-          );
-        },
+        child: FutureBuilder(
+          future: SupabaseService.client.from('discovery_routes').select(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+            final routes = snapshot.data as List;
+
+            return ListView.builder(
+              controller: scroll,
+              padding: EdgeInsets.all(24.r),
+              itemCount: routes.length + 1,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return Column(
+                    children: [
+                      Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: theme.dividerColor, borderRadius: BorderRadius.circular(2)))),
+                      SizedBox(height: 24.h),
+                      Text('REAL DISCOVERED ROUTES', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+                      SizedBox(height: 16.h),
+                    ],
+                  );
+                }
+                final r = routes[index - 1];
+                return _RouteTile(route: r);
+              },
+            );
+          },
+        ),
       ),
     );
   }
 }
 
-class _Ring extends StatelessWidget {
-  const _Ring({required this.child, required this.active});
-  final Widget child;
-  final bool active;
+class _RouteTile extends StatelessWidget {
+  final dynamic route;
+  const _RouteTile({required this.route});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      padding: EdgeInsets.all(2.5.r),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: active
-            ? AppColors.gradientFrom(Theme.of(context).colorScheme.primary)
-            : null,
-        color: active ? null : theme.colorScheme.outline,
-      ),
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => RouteDetailsPage(route: route))),
       child: Container(
-        padding: EdgeInsets.all(2.r),
+        margin: EdgeInsets.only(bottom: 12.h),
+        padding: EdgeInsets.all(16.r),
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: theme.scaffoldBackgroundColor,
+          color: AppColors.asphalt, 
+          borderRadius: BorderRadius.circular(20.r),
         ),
-        child: child,
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(route['title'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  Text('${route['distance_km']} KM • ${route['difficulty'].toString().toUpperCase()}', 
+                    style: TextStyle(color: theme.colorScheme.primary, fontSize: 11.sp, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.white24),
+          ],
+        ),
       ),
     );
   }

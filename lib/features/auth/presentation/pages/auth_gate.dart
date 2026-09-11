@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../chat/data/providers/conversation_list_provider.dart';
 import '../../../shell/presentation/pages/home_shell_page.dart';
 import '../../data/providers/auth_provider.dart';
 import 'auth_page.dart';
@@ -22,10 +21,7 @@ class AuthGate extends StatelessWidget {
       AuthStatus.unauthenticated => const AuthPage(),
       AuthStatus.awaitingVerification => const VerifyEmailPage(),
       AuthStatus.needsUsername => const UsernameSetupPage(),
-      AuthStatus.authenticated => ChangeNotifierProvider<ConversationListProvider>(
-          create: (_) => ConversationListProvider(),
-          child: const HomeShellPage(),
-        ),
+      AuthStatus.authenticated => const HomeShellPage(),
     };
 
     return AnimatedSwitcher(
