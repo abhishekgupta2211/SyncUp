@@ -137,6 +137,9 @@ class Profile {
 
   String get atUsername => '@$username';
 
+  int get nextLevelXP => (socialLevel + 1) * 1000;
+  double get levelProgress => (xpPoints % 1000) / 1000;
+
   Profile copyWith({
     String? username,
     String? displayName,
