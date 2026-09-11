@@ -13,6 +13,7 @@ class AddBikePage extends StatefulWidget {
 class _AddBikePageState extends State<AddBikePage> {
   late final _brand = TextEditingController(text: widget.bike?['brand']);
   late final _model = TextEditingController(text: widget.bike?['model']);
+  late final _nickname = TextEditingController(text: widget.bike?['nickname']);
   late final _year = TextEditingController(text: widget.bike?['year']?.toString());
   late final _cc = TextEditingController(text: widget.bike?['engine_cc']?.toString());
   bool _isSaving = false;
@@ -29,6 +30,7 @@ class _AddBikePageState extends State<AddBikePage> {
         'owner_id': SupabaseService.currentUserId,
         'brand': _brand.text.trim(),
         'model': _model.text.trim(),
+        'nickname': _nickname.text.trim().isEmpty ? null : _nickname.text.trim(),
         'year': int.tryParse(_year.text) ?? 2024,
         'engine_cc': int.tryParse(_cc.text) ?? 150,
       };
@@ -64,6 +66,8 @@ class _AddBikePageState extends State<AddBikePage> {
             _field('BRAND (e.g. Royal Enfield)', _brand),
             SizedBox(height: 20.h),
             _field('MODEL (e.g. Himalayan 450)', _model),
+            SizedBox(height: 20.h),
+            _field('NICKNAME (e.g. Beast, Thunder)', _nickname),
             SizedBox(height: 20.h),
             Row(
               children: [
