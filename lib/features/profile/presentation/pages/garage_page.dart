@@ -150,6 +150,12 @@ class _BikeCard extends StatelessWidget {
                   '${bike['engine_cc']}cc • ${bike['odometer']} KM',
                   style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
                 ),
+                SizedBox(height: 8.h),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                  decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8.r)),
+                  child: const Text('READY TO RIDE', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
               ],
             ),
           ),
