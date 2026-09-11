@@ -276,7 +276,29 @@ class _LiveRidePageState extends State<LiveRidePage> {
       if (mounted) {
         nav.pop(); // close loader
         nav.pop(); // exit ride
-        messenger.showSnackBar(SnackBar(content: Text('Ride Finished! Saved ${_distance.toStringAsFixed(2)} KM.')));
+        
+        final share = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Share your Ride?'),
+            content: Text('Awesome job! Would you like to share your ${(_distance).toStringAsFixed(1)} KM ride to the community?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('NOT NOW')),
+              ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('SHARE')),
+            ],
+          ),
+        );
+
+        if (share == true && mounted) {
+           // Logic to create a community post with ride stats
+           await SupabaseService.client.from('posts').insert({
+             'author_id': SupabaseService.currentUserId,
+             'text': 'Just completed a ride! Covered ${_distance.toStringAsFixed(2)} KM in ${title}. 🏍️🔥 #RevvRide #BikerLife',
+           });
+           messenger.showSnackBar(const SnackBar(content: Text('Ride shared to community! 🚀')));
+        } else {
+           messenger.showSnackBar(SnackBar(content: Text('Ride Finished! Saved ${_distance.toStringAsFixed(2)} KM.')));
+        }
       }
     } catch (_) {
       if (mounted) nav.pop();
