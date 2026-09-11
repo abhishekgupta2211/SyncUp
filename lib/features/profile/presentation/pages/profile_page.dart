@@ -85,6 +85,10 @@ class ProfilePage extends StatelessWidget {
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
+                              Text(
+                                'Member since 2024',
+                                style: theme.textTheme.labelSmall?.copyWith(color: Colors.white38, fontSize: 9.sp),
+                              ),
                               if (profile?.ridingStyle != null) 
                                 Text(
                                   '${profile!.ridingStyle} | ${profile.experienceYears}Y Exp',
