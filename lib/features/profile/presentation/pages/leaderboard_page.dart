@@ -12,11 +12,11 @@ class LeaderboardPage extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Top Vibes 🏆'),
+        title: const Text('Rider Leaderboard 🏆'),
         centerTitle: true,
       ),
       body: FutureBuilder(
-        future: SupabaseService.client.from('profiles').select().order('vibe_points', ascending: false).limit(20),
+        future: SupabaseService.client.from('profiles').select().order('total_distance_km', ascending: false).limit(20),
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
           final topUsers = snapshot.data as List;
@@ -51,8 +51,8 @@ class LeaderboardPage extends StatelessWidget {
                     ),
                     Column(
                       children: [
-                        const Icon(Icons.bolt, color: Colors.pinkAccent, size: 16),
-                        Text('${user['vibe_points']}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.pinkAccent)),
+                        const Icon(Icons.route_rounded, color: Colors.blueAccent, size: 16),
+                        Text('${(user['total_distance_km'] as num).toStringAsFixed(1)} KM', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
                       ],
                     ),
                   ],
