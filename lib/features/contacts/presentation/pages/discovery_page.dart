@@ -88,6 +88,17 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
       appBar: AppBar(
         title: const Text('RIDER MATCH'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bolt, color: Colors.amber),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('AI Buddy Match: Saurabh and 4 others have bikes similar to yours! 🔥')),
+              );
+            },
+            tooltip: 'Buddy Suggestions',
+          ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
