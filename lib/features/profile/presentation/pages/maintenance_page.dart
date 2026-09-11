@@ -85,6 +85,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
     if (ok == true) {
       await _client.from('bike_maintenance').delete().eq('id', id);
       _fetchLogs();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Log deleted successfully.')));
     }
   }
 
